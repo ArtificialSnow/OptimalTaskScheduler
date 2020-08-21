@@ -46,8 +46,15 @@ public class Driver {
 
         //Run the solution
         TaskGraph taskGraph = IOParser.read(fileName);
-        Solution solution = new Solution();
-        Task[] result = solution.run(taskGraph, numProcessors);
+
+        Greedy g = new Greedy();
+        int greedyTime = g.run(taskGraph, numProcessors);
+        long start = System.currentTimeMillis();
+        Solution solution = new Solution(taskGraph, numProcessors, greedyTime);
+        solution.run();
+        long end = System.currentTimeMillis();
+        System.out.println(end-start);
+        Task[] result = solution.getOptimalSchedule();
         IOParser.write(outputFilePath, taskGraph, result);
     }
 
