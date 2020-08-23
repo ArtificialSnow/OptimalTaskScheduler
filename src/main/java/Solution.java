@@ -26,6 +26,7 @@ public class Solution {
     int totalSum = 0;
     int numProcessors = 0;
     int bestTime;
+    boolean firstRecurseDone = false; //Note not 100% sure
 
     //count the number of tasks remaining and their run times and if that plus the schedule time + currentnode run time is > the best time we have return.
     public Solution(TaskGraph taskGraph, int numProcessors, int greedySolution){
@@ -88,7 +89,15 @@ public class Solution {
                     }
                 }
                 //Going to try schedule task on all processors.
+                boolean scheduledOnZero = false;
                 for (int j = 0; j < processorAvailability.length; j++) {
+                    if(processorAvailability[j] == 0){
+                        if(scheduledOnZero){
+                            continue;
+                        } else {
+                            scheduledOnZero = true;
+                        }
+                    }
                     List<Integer> parents = parentsList[task];
                     int maxTransferTime = Integer.MIN_VALUE;
                     for (int k = 0; k < parents.size(); k++) {
@@ -125,7 +134,6 @@ public class Solution {
             return;
         }
     }
-
     public Task[] getOptimalSchedule(){
         Task[] schedule = new Task[bestStartTime.length];
         for(int i = 0; i<schedule.length; i++){
