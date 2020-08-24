@@ -6,6 +6,7 @@ public class Solution {
     private TaskGraph taskGraph;
     private int numProcessors;
 
+    private int[] maxLengthToExitNode;
     private int[] inDegrees; // inDegrees[i] => number of unscheduled parent tasks of task i
     private int[] startTimes; // startTimes[i] => start time of task i
     private int[] scheduledOn;  // scheduledOn[i] => the processor task i is scheduled on (-1 if not scheduled)
@@ -28,6 +29,7 @@ public class Solution {
     public Task[] run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
         // initialisation of fields
         this.taskGraph = taskGraph;
+        this.maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
         this.numProcessors = numProcessors;
         this.bestTime = upperBoundTime;
         int n = taskGraph.getNumberOfTasks();
@@ -94,12 +96,14 @@ public class Solution {
 
         // find the processor which finishes earliest in current schedule
         int earliestProcessorFinishTime = Integer.MAX_VALUE;
+        int latestProcessorFinishTime = 0;
         for (int l = 0; l < numProcessors; l++) {
             earliestProcessorFinishTime = Math.min(processorFinishTimes[l], earliestProcessorFinishTime);
+            latestProcessorFinishTime = Math.max(processorFinishTimes[l], latestProcessorFinishTime);
         }
 
         // only continue processing this state if it is possible to do better than the current best time we have found
-        if(earliestProcessorFinishTime + minRemainingTime < bestTime) {
+        if(earliestProcessorFinishTime + minRemainingTime < bestTime || latestProcessorFinishTime > bestTime) {
 
             // recursively try different schedules
             for (int i = 0; i < scheduleCandidates.size(); i++) {
