@@ -5,14 +5,18 @@ import java.util.Queue;
 public class Greedy {
 
     /**
-     * Main method of the greedy algorithm which schedules tasks on parallel processors
+     * Main method of the algorithm which schedules tasks on parallel processors
      * n is the number of tasks.
      * @param taskGraph object that encapsulates tasks and their dependencies.
      * @param numProcessors Number of processors.
-     * @return finish time of the created schedule.
+     * @return List of scheduled tasks.
      */
-    public int run(TaskGraph taskGraph, int numProcessors) {
+    public Schedule run(TaskGraph taskGraph, int numProcessors) {
         int n = taskGraph.getNumberOfTasks();
+        int finalFinishTime = 0;
+
+        // create output array
+        Task[] output = new Task[n];
 
         // i,j indicates earliest time to schedule task i on processor j
         int[][] earliestScheduleTimes = new int[n][numProcessors];
@@ -29,9 +33,6 @@ public class Greedy {
                 scheduleCandidates.add(i);
             }
         }
-
-        // return value representing the finishing time of the schedule
-        int scheduleFinishTime = Integer.MIN_VALUE;
 
         while (!scheduleCandidates.isEmpty()) {
             // find a node with in degree 0
@@ -50,9 +51,10 @@ public class Greedy {
 
             // Schedule task
             int finishTime = minStartTime + taskGraph.getDuration(candidate);
+            finalFinishTime = Math.max(finalFinishTime, finishTime);
 
-            // Update finishing time of schedule if this is the last task to finish
-            scheduleFinishTime = Math.max(finishTime, scheduleFinishTime);
+            // Starting processor is 1, not 0, in the output (so need to increment)
+            output[candidate] = new Task(candidate, minStartTime, finishTime, minProcessor+1);
 
             // Update earliest schedule times for children
             for (int child: taskGraph.getChildrenList(candidate)) {
@@ -80,6 +82,6 @@ public class Greedy {
             }
         }
 
-        return scheduleFinishTime;
+        return new Schedule(output, finalFinishTime);
     }
 }

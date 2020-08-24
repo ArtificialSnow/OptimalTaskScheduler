@@ -49,11 +49,11 @@ public class Driver {
 
         // Run greedy algorithm to determine lower bound of optimal solution
         Greedy g = new Greedy();
-        int greedyTime = g.run(taskGraph, numProcessors);
+        Schedule greedySchedule = g.run(taskGraph, numProcessors);
 
         // Run algorithm to find optimal schedule
         Solution solution = new Solution();
-        Task[] result = solution.run(taskGraph, numProcessors, greedyTime);
+        Task[] result = solution.run(taskGraph, numProcessors, greedySchedule.getFinishTime());
 
         IOParser.write(outputFilePath, taskGraph, result);
     }
