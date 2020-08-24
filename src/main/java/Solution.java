@@ -26,7 +26,7 @@ public class Solution {
      * @param upperBoundTime Upper bound of running time that the optimal solution should do at least as good as.
      * @return optimal schedule found by the run method.
      */
-    public Task[] run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
+    public Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
         // initialisation of fields
         this.taskGraph = taskGraph;
         this.maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
@@ -60,7 +60,7 @@ public class Solution {
                     bestStartTime[i] + taskGraph.getDuration(i), bestScheduledOn[i]);
             optimalSchedule[i] = t;
         }
-        return optimalSchedule;
+        return new Schedule(optimalSchedule, bestTime);
     }
 
     /**
@@ -78,7 +78,7 @@ public class Solution {
             }
 
             // check if this schedule has the best time
-            if (finishTime <= bestTime) {
+            if (finishTime < bestTime) {
                 bestTime = finishTime;
 
                 // update the best schedule

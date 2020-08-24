@@ -53,9 +53,16 @@ public class Driver {
 
         // Run algorithm to find optimal schedule
         Solution solution = new Solution();
-        Task[] result = solution.run(taskGraph, numProcessors, greedySchedule.getFinishTime());
+        Schedule result = solution.run(taskGraph, numProcessors, greedySchedule.getFinishTime());
 
-        IOParser.write(outputFilePath, taskGraph, result);
+        // Our solution ignores all schedules that are >= than the greedy schedule,
+        // so this is to ensure if nothing is faster, we return the greedy schedule.
+        if (result.getFinishTime() >= greedySchedule.getFinishTime()) {
+            IOParser.write(outputFilePath, taskGraph, greedySchedule.getTasks());
+        } else {
+            IOParser.write(outputFilePath, taskGraph, result.getTasks());
+        }
+
     }
 
     private static CommandLine getCommandLineOptions(String[] args){
