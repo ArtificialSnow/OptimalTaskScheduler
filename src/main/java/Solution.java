@@ -40,7 +40,6 @@ public class Solution {
         processorFinishTimes = new int[numProcessors];
         startTimes = new int[n];
         scheduledOn = new int[n];
-        Arrays.fill(scheduledOn, -1);
         scheduleCandidates = new LinkedList<>();
         for (int i = 0; i < n; i++) {
             // calculate remaining duration of tasks to be scheduled
@@ -177,8 +176,6 @@ public class Solution {
             }
 
             // backtracking
-            // remove scheduling of candidate task
-            scheduledOn[candidateTask] = -1;
             // revert totalSum to include candidate task
             remainingDuration += taskGraph.getDuration(candidateTask);
             for (Integer candidateChild : candidateChildren) {

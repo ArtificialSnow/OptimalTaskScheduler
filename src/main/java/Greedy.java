@@ -53,8 +53,7 @@ public class Greedy {
             int finishTime = minStartTime + taskGraph.getDuration(candidate);
             finalFinishTime = Math.max(finalFinishTime, finishTime);
 
-            // Starting processor is 1, not 0, in the output (so need to increment)
-            output[candidate] = new Task(candidate, minStartTime, finishTime, minProcessor+1);
+            output[candidate] = new Task(candidate, minStartTime, finishTime, minProcessor);
 
             // Update earliest schedule times for children
             for (int child: taskGraph.getChildrenList(candidate)) {
