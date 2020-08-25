@@ -1,4 +1,3 @@
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -9,7 +8,7 @@ public class Solution {
     private int[] maxLengthToExitNode;
     private int[] inDegrees; // inDegrees[i] => number of unscheduled parent tasks of task i
     private int[] startTimes; // startTimes[i] => start time of task i
-    private int[] scheduledOn;  // scheduledOn[i] => the processor task i is scheduled on (-1 if not scheduled)
+    private int[] scheduledOn;  // scheduledOn[i] => the processor task i is scheduled on
     private int[] processorFinishTimes; // processorAvailability[i] => finishing time of the last task scheduled on processor i
     private int remainingDuration = 0; // total duration of remaining tasks to be scheduled (used for pruning)
 

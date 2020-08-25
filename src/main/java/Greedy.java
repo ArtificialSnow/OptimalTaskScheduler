@@ -1,5 +1,5 @@
+import java.util.LinkedList;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class Greedy {
@@ -25,7 +25,7 @@ public class Greedy {
         int[] inDegrees = new int[n];
 
         // initialise list of vertices with in degree = 0
-        Queue<Integer> scheduleCandidates = new PriorityQueue<>();
+        Queue<Integer> scheduleCandidates = new LinkedList<>();
 
         for (int i = 0; i < n; i++) {
             inDegrees[i] = taskGraph.getParentsList(i).size();
