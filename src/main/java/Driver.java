@@ -69,12 +69,14 @@ public class Driver {
         Options options = new Options();
         Option p = new Option("p", true, "numCores");
         p.setRequired(false);
+        options.addOption(p);
+
         Option v = new Option("v", false, "visualization");
         v.setRequired(false);
+        options.addOption(v);
+
         Option o = new Option("o", true, "output");
         o.setRequired(false);
-        options.addOption(p);
-        options.addOption(v);
         options.addOption(o);
 
         CommandLineParser parser = new DefaultParser();
