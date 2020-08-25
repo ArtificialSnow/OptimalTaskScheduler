@@ -89,6 +89,29 @@ public class Solution {
                 }
             }
 
+            // Calculate information we need about constraints due to communication costs
+            int maxDataArrival = 0;
+            int processorCausingMaxDataArrival = 0;
+            int secondMaxDataArrival = 0;
+
+            List<Integer> parents = taskGraph.getParentsList(candidateTask);
+            for(int parent : parents){
+                int dataArrival = startTimes[parent] + taskGraph.getDuration(parent) + taskGraph.getCommCost(parent, candidateTask);
+                if(dataArrival >= maxDataArrival){
+                    if(scheduledOn[parent] != processorCausingMaxDataArrival){
+                        secondMaxDataArrival = maxDataArrival;
+                    }
+                    maxDataArrival = dataArrival;
+                    processorCausingMaxDataArrival = scheduledOn[parent];
+
+                } else if(dataArrival >= secondMaxDataArrival){
+                    if(scheduledOn[parent] != processorCausingMaxDataArrival){
+                        secondMaxDataArrival = dataArrival;
+                    }
+                }
+            }
+
+
             // Iterate through processors
             boolean hasBeenScheduledAtStart = false;
             for (int candidateProcessor = 0; candidateProcessor < numProcessors; candidateProcessor++) {
@@ -104,13 +127,10 @@ public class Solution {
 
                 // Find earliest time to schedule candidate task on candidate processor
                 int earliestStartTimeOnCurrentProcessor = processorFinishTimes[candidateProcessor];
-                List<Integer> parents = taskGraph.getParentsList(candidateTask);
-                for (int parent : parents) {
-                    // check constraints due to comm costs of parents on other processors
-                    if (scheduledOn[parent] != candidateProcessor) {
-                        earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, startTimes[parent] +
-                                taskGraph.getDuration(parent) + taskGraph.getCommCost(parent, candidateTask));
-                    }
+                if(processorCausingMaxDataArrival != candidateProcessor) {
+                    earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, maxDataArrival);
+                } else {
+                    earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, secondMaxDataArrival);
                 }
 
                 // Exit conditions 2: tighter constraint now that we have selected the processor
@@ -200,7 +220,4 @@ public class Solution {
 
         return max;
     }
-
-
-
 }
