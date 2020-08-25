@@ -1,5 +1,6 @@
 import java.util.LinkedList;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Queue;
 
 public class Greedy {
@@ -19,23 +20,24 @@ public class Greedy {
         int[][] earliestScheduleTimes = new int[n][numProcessors]; // i,j indicates earliest time to schedule task i on processor j
 
         int[] inDegrees = new int[n];
-        Queue<Integer> scheduleCandidates = new LinkedList<>();
+        // order the candidate tasks such that we will schedule the largest task first.
+        PriorityQueue<CandidateTask> candidateTasks = new PriorityQueue<>();
         for (int i = 0; i < n; i++) {
             inDegrees[i] = taskGraph.getParentsList(i).size();
             if (inDegrees[i] == 0) {
-                scheduleCandidates.add(i);
+                candidateTasks.add(new CandidateTask(taskGraph, i));
             }
         }
 
-        while (!scheduleCandidates.isEmpty()) {
+        while (!candidateTasks.isEmpty()) {
             // find a node with in degree 0
-            int candidate = scheduleCandidates.poll();
+            CandidateTask candidateTask = candidateTasks.poll();
 
             // Choose processor to schedule task on
-            int minStartTime = earliestScheduleTimes[candidate][0];
+            int minStartTime = earliestScheduleTimes[candidateTask.getTaskId()][0];
             int minProcessor = 0;
             for (int i = 1; i < numProcessors; i++) {
-                int currStartTime = earliestScheduleTimes[candidate][i];
+                int currStartTime = earliestScheduleTimes[candidateTask.getTaskId()][i];
                 if (currStartTime < minStartTime) {
                     minStartTime = currStartTime;
                     minProcessor = i;
@@ -43,13 +45,13 @@ public class Greedy {
             }
 
             // Schedule task
-            int finishTime = minStartTime + taskGraph.getDuration(candidate);
+            int finishTime = minStartTime + candidateTask.getDuration();
             finalFinishTime = Math.max(finalFinishTime, finishTime);
 
-            output[candidate] = new Task(candidate, minStartTime, finishTime, minProcessor);
+            output[candidateTask.getTaskId()] = new Task(candidateTask.getTaskId(), minStartTime, finishTime, minProcessor);
 
             // Update earliest schedule times for children
-            for (int child: taskGraph.getChildrenList(candidate)) {
+            for (int child: candidateTask.getChildrenList()) {
                 for (int i = 0; i < numProcessors; i++) {
                     if (i == minProcessor) {
                         // for the processor the candidate was applied to,
@@ -57,7 +59,7 @@ public class Greedy {
                         earliestScheduleTimes[child][minProcessor] = Math.max(finishTime,
                                 earliestScheduleTimes[child][minProcessor]);
                     } else {
-                        earliestScheduleTimes[child][i] = Math.max(finishTime + taskGraph.getCommCost(candidate, child),
+                        earliestScheduleTimes[child][i] = Math.max(finishTime + candidateTask.getCommCost(child),
                                 earliestScheduleTimes[child][i]);
                     }
                 }
@@ -65,7 +67,7 @@ public class Greedy {
                 // Decrement in-degree count of child and see if it can be a candidate
                 inDegrees[child]--;
                 if (inDegrees[child] == 0) {
-                    scheduleCandidates.add(child);
+                    candidateTasks.add(new CandidateTask(taskGraph, child));
                 }
             }
             // Update earliest schedule times for the processor which the task was scheduled on (minProcessor)
@@ -75,5 +77,44 @@ public class Greedy {
         }
 
         return new Schedule(output, finalFinishTime);
+    }
+
+    private class CandidateTask implements  Comparable{
+        int taskId;
+        TaskGraph taskGraph;
+
+
+        public CandidateTask(TaskGraph taskGraph, int taskId) {
+            this.taskId = taskId;
+            this.taskGraph = taskGraph;
+        }
+
+        public int getTaskId() {
+            return taskId;
+        }
+
+        public int getDuration() {
+            return taskGraph.getDuration(taskId);
+        }
+
+        public List<Integer> getChildrenList() {
+            return taskGraph.getChildrenList(taskId);
+        }
+
+        public int getCommCost(int child) {
+            return taskGraph.getCommCost(taskId, child);
+        }
+
+        @Override
+        public int compareTo(Object o) {
+            CandidateTask otherTask = (CandidateTask)o;
+            if (this.getDuration() > otherTask.getDuration()) {
+                return -1;
+            } else if (this.getDuration() == otherTask.getDuration()) {
+                return 0;
+            } else {
+                return 1;
+            }
+        }
     }
 }

@@ -9,7 +9,6 @@ public class Task {
     int startTime;
     int finishTime;
     int processor;
-    List<Task> parents = new ArrayList<>();
 
     /**
      * When a task is confirmed to be scheduled on a specific processor at a specific time, a Task object relating to
@@ -38,12 +37,4 @@ public class Task {
 
     public int getId() { return id; }
 
-    // Testing purposes
-    public void addParent(Task parent) {
-        parents.add(parent);
-    }
-
-    public List<Task> getParents() {
-        return parents;
-    }
 }
