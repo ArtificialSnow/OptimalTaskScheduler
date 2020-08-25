@@ -2,6 +2,9 @@ import org.apache.commons.cli.*;
 
 public class Driver {
 
+    // Flag for timing
+    private static final boolean IS_TIMING = true;
+
     /**
      * Main method of the project from which everything is instantiated and run.
      * Uses the IOParser class to create a TaskGraph object. A solution object uses the TaskGraph object to create a schedule represented by an array of Tasks.
@@ -44,6 +47,12 @@ public class Driver {
             System.err.println("Note: the visual version has not been implemented yet");
         }
 
+        long startTime, endTime;
+
+        if (IS_TIMING) {
+            startTime = System.currentTimeMillis();
+        }
+
         // Read input file
         TaskGraph taskGraph = IOParser.read(fileName);
 
@@ -53,9 +62,11 @@ public class Driver {
 
         // Run algorithm to find optimal schedule
         Solution solution = new Solution();
-        long startTime = System.currentTimeMillis();
         Schedule result = solution.run(taskGraph, numProcessors, greedySchedule.getFinishTime());
-        System.out.print(System.currentTimeMillis() - startTime);
+        if (IS_TIMING) {
+            endTime = System.currentTimeMillis();
+            System.out.println("Our solution took: " + (endTime - startTime) + " ms.");
+        }
 
         // Our solution ignores all schedules that are >= than the greedy schedule,
         // so this is to ensure if nothing is faster, we return the greedy schedule.
