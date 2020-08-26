@@ -53,10 +53,10 @@ public class ValidateSolution {
                 processors[task.getProcessor()].add(task);
             }
 
-            if (!parentsCompleteBeforeTask(task, commCosts)) {
+            /*if (!parentsCompleteBeforeTask(task, commCosts)) {
                 System.out.println("Parents are not complete before task.");
                 return false;
-            }
+            }*/
 
             // make sure that the task is actually complete
             if (task.getFinishTime()-task.getStartTime() != durations[task.getId()]) {
@@ -72,14 +72,14 @@ public class ValidateSolution {
                 continue;
             }
 
-            for (int parent: parents) {
+            /*for (int parent: parents) {
                 for (Task parentTask: solution) {
                     if (parent == parentTask.getId()) {
                         task.addParent(parentTask);
                         break;
                     }
                 }
-            }
+            }*/
         }
         return true;
     }
@@ -91,7 +91,7 @@ public class ValidateSolution {
      * @param task The task whose parents to check if they are done
      * @return Whether the parents have been completed before the task
      */
-    private boolean parentsCompleteBeforeTask(Task task, int[][] commCosts) {
+    /*private boolean parentsCompleteBeforeTask(Task task, int[][] commCosts) {
         List<Task> parents = task.getParents();
 
         for (Task parent: parents) {
@@ -108,5 +108,5 @@ public class ValidateSolution {
         }
 
         return true;
-    }
+    }*/
 }

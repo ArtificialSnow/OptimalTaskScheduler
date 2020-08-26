@@ -1,7 +1,4 @@
-import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 public class Greedy {
 
@@ -20,24 +17,41 @@ public class Greedy {
         int[][] earliestScheduleTimes = new int[n][numProcessors]; // i,j indicates earliest time to schedule task i on processor j
 
         int[] inDegrees = new int[n];
-        // order the candidate tasks such that we will schedule the largest task first.
-        PriorityQueue<CandidateTask> candidateTasks = new PriorityQueue<>();
+
+
+
+        // get all tasks that have no dependencies
+        Queue<Integer> candidateTasks = new LinkedList<>();
         for (int i = 0; i < n; i++) {
             inDegrees[i] = taskGraph.getParentsList(i).size();
             if (inDegrees[i] == 0) {
-                candidateTasks.add(new CandidateTask(taskGraph, i));
+                candidateTasks.add(i);
             }
         }
 
+        Map<Integer, Integer> taskBottomLevelMap = new HashMap<>();
+
+        // find bottom level for each task.
+        for (int task: candidateTasks) {
+            // the minimum time each leaf would take is simply
+            // the duration it takes to run.
+            taskBottomLevelMap.put(task, taskGraph.getDuration(task));
+            // recursively find the bottom level of all nodes from
+            // the leaves.
+            findBottomLevel(taskGraph, task, taskGraph.getDuration(task), taskBottomLevelMap);
+        }
+
+        Queue<CandidateTask> sortedCandidateTasks = sortByBottomLevel(candidateTasks, taskBottomLevelMap);
+
         while (!candidateTasks.isEmpty()) {
             // find a node with in degree 0
-            CandidateTask candidateTask = candidateTasks.poll();
+            int candidateTask = candidateTasks.poll();
 
             // Choose processor to schedule task on
-            int minStartTime = earliestScheduleTimes[candidateTask.getTaskId()][0];
+            int minStartTime = earliestScheduleTimes[candidateTask][0];
             int minProcessor = 0;
             for (int i = 1; i < numProcessors; i++) {
-                int currStartTime = earliestScheduleTimes[candidateTask.getTaskId()][i];
+                int currStartTime = earliestScheduleTimes[candidateTask][i];
                 if (currStartTime < minStartTime) {
                     minStartTime = currStartTime;
                     minProcessor = i;
@@ -45,13 +59,13 @@ public class Greedy {
             }
 
             // Schedule task
-            int finishTime = minStartTime + candidateTask.getDuration();
+            int finishTime = minStartTime + taskGraph.getDuration(candidateTask);
             finalFinishTime = Math.max(finalFinishTime, finishTime);
 
-            output[candidateTask.getTaskId()] = new Task(candidateTask.getTaskId(), minStartTime, finishTime, minProcessor);
+            output[candidateTask] = new Task(candidateTask, minStartTime, finishTime, minProcessor);
 
             // Update earliest schedule times for children
-            for (int child: candidateTask.getChildrenList()) {
+            for (int child: taskGraph.getChildrenList(candidateTask)) {
                 for (int i = 0; i < numProcessors; i++) {
                     if (i == minProcessor) {
                         // for the processor the candidate was applied to,
@@ -59,7 +73,7 @@ public class Greedy {
                         earliestScheduleTimes[child][minProcessor] = Math.max(finishTime,
                                 earliestScheduleTimes[child][minProcessor]);
                     } else {
-                        earliestScheduleTimes[child][i] = Math.max(finishTime + candidateTask.getCommCost(child),
+                        earliestScheduleTimes[child][i] = Math.max(finishTime + taskGraph.getCommCost(candidateTask, child),
                                 earliestScheduleTimes[child][i]);
                     }
                 }
@@ -67,7 +81,7 @@ public class Greedy {
                 // Decrement in-degree count of child and see if it can be a candidate
                 inDegrees[child]--;
                 if (inDegrees[child] == 0) {
-                    candidateTasks.add(new CandidateTask(taskGraph, child));
+                    candidateTasks.add(child);
                 }
             }
             // Update earliest schedule times for the processor which the task was scheduled on (minProcessor)
@@ -79,42 +93,57 @@ public class Greedy {
         return new Schedule(output, finalFinishTime);
     }
 
-    private class CandidateTask implements  Comparable{
-        int taskId;
-        TaskGraph taskGraph;
+    /**
+     * recursively find the bottom level of all nodes.
+     * @param taskGraph
+     * @param parentTask
+     * @param currentBottomLevel
+     * @param taskBottomLevel
+     */
+    private void findBottomLevel(TaskGraph taskGraph, int parentTask, int currentBottomLevel, Map<Integer, Integer> taskBottomLevel) {
+        for (int childTask: taskGraph.getChildrenList(parentTask)) {
+            int newBottomLevel = currentBottomLevel + taskGraph.getDuration(childTask);
+            if (!taskBottomLevel.containsKey(childTask) ||
+                    taskBottomLevel.get(childTask) < newBottomLevel) {
+                taskBottomLevel.replace(childTask, newBottomLevel);
+            }
 
+            // if the task has children, recursively find its children's bottom levels.
+            findBottomLevel(taskGraph, childTask, newBottomLevel,taskBottomLevel);
+        }
+    }
 
-        public CandidateTask(TaskGraph taskGraph, int taskId) {
+    private Queue<CandidateTask> sortByBottomLevel(Queue<Integer> candidateTasks, Map<Integer,Integer> taskBottomLevelMap) {
+        Queue<CandidateTask> sortedCandidateTasks = new PriorityQueue<>();
+        for (int task: candidateTasks) {
+            sortedCandidateTasks.add(new CandidateTask(task, taskBottomLevelMap));
+        }
+
+        return sortedCandidateTasks;
+    }
+
+    private class CandidateTask implements Comparable<CandidateTask>{
+        private int taskId;
+        private Map<Integer,Integer> taskBottomLevelMap;
+
+        public CandidateTask(int taskId, Map<Integer,Integer> taskBottomLevelMap) {
             this.taskId = taskId;
-            this.taskGraph = taskGraph;
+            this.taskBottomLevelMap = taskBottomLevelMap;
         }
 
         public int getTaskId() {
             return taskId;
         }
 
-        public int getDuration() {
-            return taskGraph.getDuration(taskId);
-        }
-
-        public List<Integer> getChildrenList() {
-            return taskGraph.getChildrenList(taskId);
-        }
-
-        public int getCommCost(int child) {
-            return taskGraph.getCommCost(taskId, child);
-        }
 
         @Override
-        public int compareTo(Object o) {
-            CandidateTask otherTask = (CandidateTask)o;
-            if (this.getDuration() > otherTask.getDuration()) {
+        public int compareTo(CandidateTask o) {
+            if (taskBottomLevelMap.get(taskId) > taskBottomLevelMap.get(o.getTaskId())) {
                 return -1;
-            } else if (this.getDuration() == otherTask.getDuration()) {
-                return 0;
             } else {
                 return 1;
             }
         }
     }
+
 }
