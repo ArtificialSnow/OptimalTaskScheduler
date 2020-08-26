@@ -11,7 +11,6 @@ public class PartialSchedule {
      * which means it will be unique for each schedule in the solution space that have different overall finish times.
      * @param startTimes startTimes[i] => start time of task i
      * @param scheduledOn scheduledOn[i] => the processor task i is scheduled on
-     * @param numTasks number of tasks
      * @param numProcessors number of processors
      * @return hashcode representing partial solution
      */

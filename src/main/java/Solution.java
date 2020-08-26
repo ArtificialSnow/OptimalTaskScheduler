@@ -54,8 +54,8 @@ public class Solution {
             return;
         }
 
-        // Create a hash code for our partialSchedule to check whether we have examined an equivalent schedule before
-        //If we have seen an equivalent schedule we do not need to proceed
+        // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
+        // If we have seen an equivalent schedule we do not need to proceed
         int hashCode = PartialSchedule.generateHashCode(startTimes, scheduledOn, numProcessors);
         if(seenSchedules.contains(hashCode)){
             return;
