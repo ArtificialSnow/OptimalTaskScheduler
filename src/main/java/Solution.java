@@ -80,20 +80,7 @@ public class Solution {
         }
 
 
-        Collections.sort(candidateTasks, new Comparator<Integer>(){
-            @Override
-            public int compare(Integer a, Integer b){
-                if(nodePriorities[a] < nodePriorities[b]){
-                    return -1;
-                } else if(nodePriorities[a] == nodePriorities[b]){
-                    return 0;
-                } else {
-                    return 1;
-                }
-            }
-        });
-
-
+        candidateTasks.sort(Comparator.comparingInt(a -> nodePriorities[a]));
         for (int i = 0; i < candidateTasks.size(); i++) { // Iterate through tasks
             int candidateTask = candidateTasks.remove();
 
