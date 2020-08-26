@@ -4,40 +4,31 @@ import java.util.Set;
 import java.util.Stack;
 
 public class PartialSchedule {
-
-    int[][] _schedule;
-    int numProcessors;
-    //Scheduled on will need to be -1;
-
-    public PartialSchedule(int[] startTimes, int[] scheduledOn, int numTasks, int numProcessors){
-        _schedule = new int[numTasks][2];  //We only need to know the start time and the processor scheduled on
-        this.numProcessors = numProcessors;
-        for(int i = 0; i < startTimes.length; i++){
-            if(startTimes[i] != -1){
-                _schedule[i][0] = startTimes[i];
-                _schedule[i][1] = scheduledOn[i];
-            } else {
-                _schedule[i][0] = -1;
-                _schedule[i][1] = -1;
-            }
-        }
-    }
-
-    @Override
-    public int hashCode() {
-        // Initialize some stacks representing a processor and a set representing the schedule
+    /**
+     * This class contains a method which generates a hashcode that represents a partial schedule.
+     * The hashcode is then used to check whether we have explored an equivalent partial schedule.
+     * The hashcode is generated from the start times and which processor each task in scheduled on,
+     * which means it will be unique for each schedule in the solution space that have different overall finish times.
+     * @param startTimes startTimes[i] => start time of task i
+     * @param scheduledOn scheduledOn[i] => the processor task i is scheduled on
+     * @param numTasks number of tasks
+     * @param numProcessors number of processors
+     * @return hashcode representing partial solution
+     */
+    public static int generateHashCode(int[] startTimes, int[] scheduledOn, int numTasks, int numProcessors) {
+        //Each stack represents a processor
         Set<Stack<Integer>> schedule = new HashSet<>();
         Stack<Integer>[] stacks = new Stack[numProcessors];
 
-        // Initialize the stacks
         for (int i = 0; i < stacks.length; i++) {
             stacks[i] = new Stack<>();
         }
-        // Add each processors tasks and start times to a stack
-        for (int i = 0; i < _schedule.length; i++) {
-            if (_schedule[i][0] != -1) {
-                stacks[_schedule[i][1]].add(i);
-                stacks[_schedule[i][1]].add(_schedule[i][0]);
+
+        //Add tasks ids and start times to the stack which represents the processor
+        for(int i = 0; i < startTimes.length; i++){
+            if(startTimes[i] != -1){
+                stacks[scheduledOn[i]].add(i);
+                stacks[scheduledOn[i]].add(startTimes[i]);
             }
         }
 
@@ -47,19 +38,5 @@ public class PartialSchedule {
         }
 
         return schedule.hashCode();
-
     }
-
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-
-        PartialSchedule other = (PartialSchedule)obj;
-        return other.hashCode() == hashCode();
-
-    }
-
 }

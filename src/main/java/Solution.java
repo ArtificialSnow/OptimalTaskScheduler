@@ -1,5 +1,4 @@
 import java.util.*;
-import java.io.*;
 
 public class Solution {
     private TaskGraph taskGraph;
@@ -18,7 +17,7 @@ public class Solution {
     private int[] bestScheduledOn; // bestScheduledOn[i] => processor that task i is scheduled on, in best schedule
     private int bestFinishTime; // earliest finishing time of schedules we have searched
 
-    HashSet<Integer> seenScheduled = new HashSet<>();
+    HashSet<Integer> seenSchedules = new HashSet<>();
 
     /**
      * Creates an optimal scheduling of tasks on specified number of processors.
@@ -56,12 +55,12 @@ public class Solution {
         }
 
         // Create a hash code for our partialSchedule to check whether we have examined an equivalent schedule before
-        PartialSchedule schedule = new PartialSchedule(startTimes, scheduledOn, numTasks, numProcessors);
-        int hashCode = schedule.hashCode();
-        if(seenScheduled.contains(hashCode)){ //If we have seen an equivalent schedule we do not need to proceed
+        //If we have seen an equivalent schedule we do not need to proceed
+        int hashCode = PartialSchedule.generateHashCode(startTimes, scheduledOn, numTasks, numProcessors);
+        if(seenSchedules.contains(hashCode)){
             return;
         } else {
-            seenScheduled.add(hashCode);
+            seenSchedules.add(hashCode);
         }
 
         // Information we need about the current schedule
@@ -76,8 +75,9 @@ public class Solution {
         }
 
 
+        // Iterate through tasks
         candidateTasks.sort(Comparator.comparingInt(a -> nodePriorities[a]));
-        for (int i = 0; i < candidateTasks.size(); i++) { // Iterate through tasks
+        for (int i = 0; i < candidateTasks.size(); i++) {
             int candidateTask = candidateTasks.remove();
 
             // Exit conditions 1
