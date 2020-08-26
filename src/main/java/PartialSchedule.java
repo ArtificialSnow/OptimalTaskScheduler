@@ -15,7 +15,7 @@ public class PartialSchedule {
      * @param numProcessors number of processors
      * @return hashcode representing partial solution
      */
-    public static int generateHashCode(int[] startTimes, int[] scheduledOn, int numTasks, int numProcessors) {
+    public static int generateHashCode(int[] startTimes, int[] scheduledOn, int numProcessors) {
         //Each stack represents a processor
         Set<Stack<Integer>> schedule = new HashSet<>();
         Stack<Integer>[] stacks = new Stack[numProcessors];
