@@ -6,17 +6,19 @@ import java.util.Stack;
 public class PartialSchedule {
 
     int[][] _schedule;
-    int numTasks;
+    int numProcessors;
     //Scheduled on will need to be -1;
 
-    public PartialSchedule(int[] startTimes, int[] scheduledOn, int numTasks){
+    public PartialSchedule(int[] startTimes, int[] scheduledOn, int numTasks, int numProcessors){
         _schedule = new int[numTasks][2];  //We only need to know the start time and the processor scheduled on
-        int c = 0;
-        this.numTasks = numTasks;
-        for(int i = 0; i<startTimes.length; i++){
+        this.numProcessors = numProcessors;
+        for(int i = 0; i < startTimes.length; i++){
             if(startTimes[i] != -1){
-                _schedule[c][0] = startTimes[i];
-                _schedule[c][1] = scheduledOn[i];
+                _schedule[i][0] = startTimes[i];
+                _schedule[i][1] = scheduledOn[i];
+            } else {
+                _schedule[i][0] = -1;
+                _schedule[i][1] = -1;
             }
         }
     }
@@ -25,7 +27,7 @@ public class PartialSchedule {
     public int hashCode() {
         // Initialize some stacks representing a processor and a set representing the schedule
         Set<Stack<Integer>> schedule = new HashSet<>();
-        Stack<Integer>[] stacks = new Stack[numTasks];
+        Stack<Integer>[] stacks = new Stack[numProcessors];
 
         // Initialize the stacks
         for (int i = 0; i < stacks.length; i++) {
@@ -53,8 +55,8 @@ public class PartialSchedule {
     public boolean equals(Object obj) {
         if (obj == null) {
             return false;
-
         }
+
         PartialSchedule other = (PartialSchedule)obj;
         return other.hashCode() == hashCode();
 

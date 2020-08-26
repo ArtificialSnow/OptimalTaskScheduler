@@ -1,9 +1,5 @@
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.io.*;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
 
 public class Solution {
     private TaskGraph taskGraph;
@@ -17,12 +13,12 @@ public class Solution {
     private int[] processorFinishTimes; // processorFinishTimes[i] => finishing time of the last task scheduled on processor i
     private int remainingDuration = 0; // total duration of remaining tasks to be scheduled (used for pruning)
 
+    private int[] nodePriorities;
     private int[] bestStartTime; // bestStartTime[i] => start time of task i in best schedule found so far
     private int[] bestScheduledOn; // bestScheduledOn[i] => processor that task i is scheduled on, in best schedule
-    private int[] nodePriorities;
-    private int bestFinishTime; // earliest finishing time of schedules we have searche
+    private int bestFinishTime; // earliest finishing time of schedules we have searched
 
-    HashSet<PartialSchedule> seenScheduled = new HashSet<>();
+    HashSet<Integer> seenScheduled = new HashSet<>();
 
     /**
      * Creates an optimal scheduling of tasks on specified number of processors.
@@ -58,15 +54,15 @@ public class Solution {
             }
             return;
         }
-        /*
-        PartialSchedule schedule = new PartialSchedule(startTimes, scheduledOn, numTasks);
-        if(seenScheduled.contains(schedule)){
-            System.out.println("TRUE");
+
+        // Create a hash code for our partialSchedule to check whether we have examined an equivalent schedule before
+        PartialSchedule schedule = new PartialSchedule(startTimes, scheduledOn, numTasks, numProcessors);
+        int hashCode = schedule.hashCode();
+        if(seenScheduled.contains(hashCode)){ //If we have seen an equivalent schedule we do not need to proceed
             return;
         } else {
-            seenScheduled.add(schedule);
+            seenScheduled.add(hashCode);
         }
-         */
 
         // Information we need about the current schedule
         // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
@@ -175,6 +171,7 @@ public class Solution {
             }
             remainingDuration += taskGraph.getDuration(candidateTask);
             candidateTasks.add(candidateTask);
+            startTimes[candidateTask] = -1;
         }
     }
 
@@ -194,6 +191,7 @@ public class Solution {
         bestScheduledOn = new int[numTasks];
         processorFinishTimes = new int[numProcessors];
         startTimes = new int[numTasks];
+        Arrays.fill(startTimes, -1);
         scheduledOn = new int[numTasks];
         LinkedList<Integer> candidateTasks = new LinkedList<>();
 
