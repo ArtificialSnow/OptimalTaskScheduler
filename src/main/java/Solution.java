@@ -93,8 +93,8 @@ public class Solution {
             }
         });
 
-        // Iterate through tasks
-        for (int i = 0; i < candidateTasks.size(); i++) {
+
+        for (int i = 0; i < candidateTasks.size(); i++) { // Iterate through tasks
             int candidateTask = candidateTasks.remove();
 
             // Exit conditions 1
@@ -137,12 +137,11 @@ public class Solution {
                 }
             }
 
-            //deep copy... This will be used in recursion...
-            LinkedList<Integer> newCandidateList = new LinkedList<Integer>(candidateTasks);
 
-            // Iterate through processors
+            // Deep copy of candidateList is used in next recursive iteration
+            LinkedList<Integer> nextCandidateList = new LinkedList<Integer>(candidateTasks);
             boolean hasBeenScheduledAtStart = false;
-            for (int candidateProcessor = 0; candidateProcessor < numProcessors; candidateProcessor++) {
+            for (int candidateProcessor = 0; candidateProcessor < numProcessors; candidateProcessor++) { // Iterate through processors
                 // Avoid processor isomorphism
                 if (processorFinishTimes[candidateProcessor] == 0) {
                     if (hasBeenScheduledAtStart) {
@@ -173,7 +172,7 @@ public class Solution {
                 scheduledOn[candidateTask] = candidateProcessor;
                 startTimes[candidateTask] = earliestStartTimeOnCurrentProcessor;
 
-                recursiveSearch(newCandidateList);
+                recursiveSearch(nextCandidateList);
 
                 // Backtrack state (Location 2: Processors)
                 processorFinishTimes[candidateProcessor] = prevFinishTime;
