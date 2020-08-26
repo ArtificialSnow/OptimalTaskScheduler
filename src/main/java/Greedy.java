@@ -2,6 +2,8 @@ import java.util.*;
 
 public class Greedy {
 
+    private Map<Integer,Integer> taskBottomLevelMap = new HashMap<>();
+
     /**
      * Main method of the algorithm which schedules tasks on parallel processors
      * n is the number of tasks.
@@ -29,8 +31,6 @@ public class Greedy {
             }
         }
 
-        Map<Integer, Integer> taskBottomLevelMap = new HashMap<>();
-
         // find bottom level for each task.
         for (int task: candidateTasks) {
             // the minimum time each leaf would take is simply
@@ -38,14 +38,14 @@ public class Greedy {
             taskBottomLevelMap.put(task, taskGraph.getDuration(task));
             // recursively find the bottom level of all nodes from
             // the leaves.
-            findBottomLevel(taskGraph, task, taskGraph.getDuration(task), taskBottomLevelMap);
+            findBottomLevel(taskGraph, task, taskGraph.getDuration(task));
         }
 
-        Queue<CandidateTask> sortedCandidateTasks = sortByBottomLevel(candidateTasks, taskBottomLevelMap);
+        Queue<Integer> sortedCandidateTasks = sortByBottomLevel(candidateTasks);
 
-        while (!candidateTasks.isEmpty()) {
+        while (!sortedCandidateTasks.isEmpty()) {
             // find a node with in degree 0
-            int candidateTask = candidateTasks.poll();
+            int candidateTask = sortedCandidateTasks.poll();
 
             // Choose processor to schedule task on
             int minStartTime = earliestScheduleTimes[candidateTask][0];
@@ -81,7 +81,7 @@ public class Greedy {
                 // Decrement in-degree count of child and see if it can be a candidate
                 inDegrees[child]--;
                 if (inDegrees[child] == 0) {
-                    candidateTasks.add(child);
+                    sortedCandidateTasks.add(child);
                 }
             }
             // Update earliest schedule times for the processor which the task was scheduled on (minProcessor)
@@ -98,52 +98,28 @@ public class Greedy {
      * @param taskGraph
      * @param parentTask
      * @param currentBottomLevel
-     * @param taskBottomLevel
      */
-    private void findBottomLevel(TaskGraph taskGraph, int parentTask, int currentBottomLevel, Map<Integer, Integer> taskBottomLevel) {
+    private void findBottomLevel(TaskGraph taskGraph, int parentTask, int currentBottomLevel) {
         for (int childTask: taskGraph.getChildrenList(parentTask)) {
             int newBottomLevel = currentBottomLevel + taskGraph.getDuration(childTask);
-            if (!taskBottomLevel.containsKey(childTask) ||
-                    taskBottomLevel.get(childTask) < newBottomLevel) {
-                taskBottomLevel.replace(childTask, newBottomLevel);
+            if (!taskBottomLevelMap.containsKey(childTask)) {
+                taskBottomLevelMap.put(childTask, newBottomLevel);
+            } else if (taskBottomLevelMap.get(childTask) < newBottomLevel) {
+                taskBottomLevelMap.replace(childTask, newBottomLevel);
             }
 
             // if the task has children, recursively find its children's bottom levels.
-            findBottomLevel(taskGraph, childTask, newBottomLevel,taskBottomLevel);
+            findBottomLevel(taskGraph, childTask, newBottomLevel);
         }
     }
 
-    private Queue<CandidateTask> sortByBottomLevel(Queue<Integer> candidateTasks, Map<Integer,Integer> taskBottomLevelMap) {
-        Queue<CandidateTask> sortedCandidateTasks = new PriorityQueue<>();
+    private Queue<Integer> sortByBottomLevel(Queue<Integer> candidateTasks) {
+        Queue<Integer> sortedCandidateTasks = new PriorityQueue<>(Comparator.comparingInt(taskBottomLevelMap::get).reversed());
         for (int task: candidateTasks) {
-            sortedCandidateTasks.add(new CandidateTask(task, taskBottomLevelMap));
+            sortedCandidateTasks.add(task);
         }
 
         return sortedCandidateTasks;
-    }
-
-    private class CandidateTask implements Comparable<CandidateTask>{
-        private int taskId;
-        private Map<Integer,Integer> taskBottomLevelMap;
-
-        public CandidateTask(int taskId, Map<Integer,Integer> taskBottomLevelMap) {
-            this.taskId = taskId;
-            this.taskBottomLevelMap = taskBottomLevelMap;
-        }
-
-        public int getTaskId() {
-            return taskId;
-        }
-
-
-        @Override
-        public int compareTo(CandidateTask o) {
-            if (taskBottomLevelMap.get(taskId) > taskBottomLevelMap.get(o.getTaskId())) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
     }
 
 }
