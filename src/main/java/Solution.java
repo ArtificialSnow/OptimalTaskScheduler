@@ -345,29 +345,34 @@ public class Solution {
                 int commCost = taskGraph.getCommCost(parent, task2);
                 task2DataReadyTime = taskStartTimes[parent] + taskGraph.getDuration(parent) + commCost;
             }
+
             if (task1DataReadyTime < task2DataReadyTime) {
                 return -1;
-            } else if (task1DataReadyTime == task2DataReadyTime) {
-                // break the tie using the out-edge cost
-                int task1OutEdgeCost = 0;
-                int task2OutEdgeCost = 0;
-                if (!taskGraph.getChildrenList(task1).isEmpty()) {
-                    int child = taskGraph.getChildrenList(task1).get(0);
-                    task1OutEdgeCost = taskGraph.getCommCost(task1, child);
-                }
-                if (!taskGraph.getChildrenList(task2).isEmpty()) {
-                    int child = taskGraph.getChildrenList(task2).get(0);
-                    task2OutEdgeCost = taskGraph.getCommCost(task2, child);
-                }
-
-                if (task1OutEdgeCost > task2OutEdgeCost) {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            } else {
+            }
+            if (task1DataReadyTime > task2DataReadyTime) {
                 return 1;
             }
+
+            // Data ready times are equal, break the tie using the out-edge cost
+            int task1OutEdgeCost = 0;
+            int task2OutEdgeCost = 0;
+            if (!taskGraph.getChildrenList(task1).isEmpty()) {
+                int child = taskGraph.getChildrenList(task1).get(0);
+                task1OutEdgeCost = taskGraph.getCommCost(task1, child);
+            }
+            if (!taskGraph.getChildrenList(task2).isEmpty()) {
+                int child = taskGraph.getChildrenList(task2).get(0);
+                task2OutEdgeCost = taskGraph.getCommCost(task2, child);
+            }
+
+            if (task1OutEdgeCost > task2OutEdgeCost) {
+                return -1;
+            }
+            if (task1OutEdgeCost < task2OutEdgeCost) {
+                return 1;
+            }
+            //Data ready times and out-edge costs are equal
+            return 0;
         });
     }
 
