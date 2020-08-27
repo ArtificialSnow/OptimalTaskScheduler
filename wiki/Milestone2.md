@@ -5,6 +5,7 @@
 ### Pre-Processing
 * #### Node Duplication
 * #### Initial Greedy Schedule
+* #### Max Length to Exit Node
 
 ### Recursive Search and Backtracking
 
@@ -24,8 +25,8 @@ Since our search space is exponential, we need to find methods to prune this sea
    2. All the candidateTasks must have either no child or the same child.
    3. All the candidateTasks must have either no parent, or their parents are scheduled on the same processor.
    4. The candidateTasks list can be sorted such that the list fulfills the following two conditions. This will be the fixed task order.
-        1. The tasks in the list are in non-decreasing data ready time. Data ready time = finish time of parent + communication cost of parent to the task.
-        2. The tasks in the list are in non-increasing out-edge costs. Out-edge cost = communication cost of task to its child, or 0 if the task does not have a child.
+        1. The tasks in the list are in non-decreasing data ready time. `Data ready time = finish time of parent + communication cost of parent to the task`.
+        2. The tasks in the list are in non-increasing out-edge costs. `Out-edge cost = communication cost of task to its child`, or 0 if the task does not have a child.
      
    The fixed task order means that among the tasks in candidateTasks, an optimal solution should contain these tasks scheduled in this order. By fixing the task order, we are able to prune our tree by a factor of the number of tasks in candidateTasks, as we no longer need to check every single ordering. 
    
@@ -36,8 +37,13 @@ Since our search space is exponential, we need to find methods to prune this sea
 * #### Load Balancing
     The load balanced time (LBT) is the minimum remaining time if all the remaining unscheduled tasks are spread evenly amongst the processors, not including communication costs. LBT = sum(unscheduled task durations) / number of processors.
     
-    Since the LBT is a minimum bound on the finish time of the current schedule, if LBT is slower than the current best schedule, we know that the current schedule can't become an optimal schedule and we can prune the tree.
+    Since the LBT is a minimum bound on the finish time of the current schedule, if `LBT + earliest time we can schedule the next task` is slower than the current best schedule, we know that the current schedule can't become an optimal schedule and we can prune the tree.
+
 * #### Critical Path
+    The critical path is the path with the largest max length to an exit node in the current schedule. Since no matter what is in our schedule, this critical path will have nodes that depend on each other and hence can only be scheduled sequentially.
+    
+    The critical path is another minimum bound on the finish time of the current schedule. We prune the tree if the `critical path + current elapsed time >= finish time of best schedule` so far.
+    
 * #### Latest Finish Time
 
 ### Edge Cases
