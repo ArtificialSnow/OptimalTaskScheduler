@@ -319,16 +319,45 @@ public class Solution {
 
 
     private void sortByDataReadyTime(List<Integer> candidateTasks) {
-        int[] dataReadyTimes = new int[numTasks];
-        for(int candidate : candidateTasks){
-            if (taskGraph.getParentsList(candidate).size() > 0) {
-                int parent = taskGraph.getParentsList(candidate).get(0);
-                int commCost = taskGraph.getCommCost(parent, candidate);
-                dataReadyTimes[candidate] = taskStartTimes[parent] + taskGraph.getDuration(parent) + commCost;
-            }
-        }
+        candidateTasks.sort((task1, task2) -> {
+            int task1DataReadyTime = 0;
+            int task2DataReadyTime = 0;
 
-        candidateTasks.sort(Comparator.comparingInt(a -> dataReadyTimes[a]));
+            if (!taskGraph.getParentsList(task1).isEmpty()) {
+                int parent = taskGraph.getParentsList(task1).get(0);
+                int commCost = taskGraph.getCommCost(parent, task1);
+                task1DataReadyTime = taskStartTimes[parent] + taskGraph.getDuration(parent) + commCost;
+            }
+
+            if (!taskGraph.getParentsList(task2).isEmpty()) {
+                int parent = taskGraph.getParentsList(task2).get(0);
+                int commCost = taskGraph.getCommCost(parent, task2);
+                task2DataReadyTime = taskStartTimes[parent] + taskGraph.getDuration(parent) + commCost;
+            }
+            if (task1DataReadyTime < task2DataReadyTime) {
+                return -1;
+            } else if (task1DataReadyTime == task2DataReadyTime) {
+                // break the tie using the out-edge cost
+                int task1OutEdgeCost = 0;
+                int task2OutEdgeCost = 0;
+                if (!taskGraph.getChildrenList(task1).isEmpty()) {
+                    int child = taskGraph.getChildrenList(task1).get(0);
+                    task1OutEdgeCost = taskGraph.getCommCost(task1, child);
+                }
+                if (!taskGraph.getChildrenList(task2).isEmpty()) {
+                    int child = taskGraph.getChildrenList(task2).get(0);
+                    task2OutEdgeCost = taskGraph.getCommCost(task2, child);
+                }
+
+                if (task1OutEdgeCost > task2OutEdgeCost) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            } else {
+                return 1;
+            }
+        });
     }
 
     public void getFTOSchedule(LinkedList<Integer> ftoSortedList) {
@@ -390,7 +419,7 @@ public class Solution {
                 taskChildAdded = true;
             }
         }
-        
+
         // since we have a FTO, we can schedule the first task on all processors.
         boolean hasBeenScheduledAtStart = false;
         for (int candidateProcessor = 0; candidateProcessor < numProcessors; candidateProcessor++) {
