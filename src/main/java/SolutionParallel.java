@@ -1,27 +1,23 @@
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.*;
 
 public class SolutionParallel extends Solution {
+    private final ForkJoinPool forkJoinPool = new ForkJoinPool(3);
+
     private TaskGraph taskGraph;
     private int numProcessors;
     private int numTasks;
 
     // does not change
-    private volatile int[] nodePriorities;   //REFACTORRRRRRRRRRRRRRRRR
-    private volatile ArrayList<Integer>[] equivalentNodesList;  //REFACTORRRRRRRRRRRRRRRRR
-    private volatile int[] maxLengthToExitNode;
+    private int[] nodePriorities;   //REFACTORRRRRRRRRRRRRRRRR
+    private ArrayList<Integer>[] equivalentNodesList;  //REFACTORRRRRRRRRRRRRRRRR
+    private int[] maxLengthToExitNode;
 
-    private volatile int[] bestStartTime; // bestStartTime[i] => start time of task i in best schedule found so far
+    private int[] bestStartTime; // bestStartTime[i] => start time of task i in best schedule found so far
     private volatile int[] bestScheduledOn; // bestScheduledOn[i] => processor that task i is scheduled on, in best schedule
     private volatile int bestFinishTime; // earliest finishing time of schedules we have searched
-    private volatile Future<Void>[] threadsFutures;
     private volatile HashSet<Integer> seenSchedules = new HashSet<>();
-    private ExecutorService executor;
-
 
     /**
      * Creates an optimal scheduling of tasks on specified number of processors.
@@ -35,183 +31,189 @@ public class SolutionParallel extends Solution {
         initializeGlobalVars(taskGraph, numProcessors, upperBoundTime);
         State initialState = initializeState(taskGraph, numProcessors);
 
-        recursiveSearch(initialState);
+        RecursiveSearch recursiveSearch = new RecursiveSearch(initialState);
+        forkJoinPool.invoke(recursiveSearch);
+
         return createOutput();
     }
 
-    /**
-     * Recursively try to schedule a task on a processor.
-     * Uses DFS to try all possible schedules.
-     */
-    private void recursiveSearch(State state) throws IOException, ClassNotFoundException {
-        System.out.println(Thread.currentThread().getName());
-        // Base case is when queue is empty, i.e. all tasks scheduled.
-        if (state.candidateTasks.isEmpty()) {
-            int finishTime = findMaxInArray(state.processorFinishTimes);
+    private class RecursiveSearch extends RecursiveAction {
+        private State state;
 
-            //If schedule time is better, update bestFinishTime and best schedule
-            if (finishTime < bestFinishTime) {
-                bestFinishTime = finishTime;
-
-                for (int i = 0; i < bestStartTime.length; i++) {
-                    bestScheduledOn[i] = state.scheduledOn[i];
-                    bestStartTime[i] = state.taskStartTimes[i];
-                }
-            }
-            return;
+        private RecursiveSearch(State state) {
+            this.state = state;
         }
 
-        // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
-        // If we have seen an equivalent schedule we do not need to proceed
-        int hashCode = PartialSchedule.generateHashCode(state.taskStartTimes, state.scheduledOn, numProcessors);
-        if (seenSchedules.contains(hashCode)) {
-            return;
-        } else {
-            seenSchedules.add(hashCode);
-        }
+        /**
+         * Recursively try to schedule a task on a processor.
+         * Uses DFS to try all possible schedules.
+         */
+        @Override
+        protected void compute() {
+            System.out.println(Thread.currentThread().getName());
+            // Base case is when queue is empty, i.e. all tasks scheduled.
+            if (state.candidateTasks.isEmpty()) {
+                int finishTime = findMaxInArray(state.processorFinishTimes);
 
-        // Information we need about the current schedule
-        // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
-        int loadBalancedRemainingTime = (int) Math.ceil(state.remainingDuration / (double) numProcessors);
+                synchronized (this) {
+                    //If schedule time is better, update bestFinishTime and best schedule
+                    if (finishTime < bestFinishTime) {
+                        bestFinishTime = finishTime;
 
-        int earliestProcessorFinishTime = Integer.MAX_VALUE;
-        int latestProcessorFinishTime = 0;
-        for (int l = 0; l < numProcessors; l++) {
-            earliestProcessorFinishTime = Math.min(state.processorFinishTimes[l], earliestProcessorFinishTime);
-            latestProcessorFinishTime = Math.max(state.processorFinishTimes[l], latestProcessorFinishTime);
-        }
-
-        int longestCriticalPath = 0;
-        for(int task : state.candidateTasks){
-            int criticalPath = maxLengthToExitNode[task];
-            if (criticalPath > longestCriticalPath){
-                longestCriticalPath = criticalPath;
-            }
-        }
-
-        // Iterate through tasks
-        state.candidateTasks.sort(Comparator.comparingInt(a -> nodePriorities[a]));
-        HashSet<Integer> seenTasks = new HashSet<>();
-        for (int i = 0; i < state.candidateTasks.size(); i++) {
-            int candidateTask = state.candidateTasks.remove();
-            if(seenTasks.contains(candidateTask)){
-                state.candidateTasks.add(candidateTask);
-                continue;
-            } else {
-                ArrayList<Integer> equivalentNodes = equivalentNodesList[candidateTask];
-                seenTasks.addAll(equivalentNodes);
-            }
-
-            // Exit conditions 1
-            boolean loadBalancingConstraint = earliestProcessorFinishTime + loadBalancedRemainingTime >= bestFinishTime;
-            boolean criticalPathConstraint = earliestProcessorFinishTime + longestCriticalPath >= bestFinishTime;
-            boolean latestFinishTimeConstraint = latestProcessorFinishTime >= bestFinishTime;
-            if (loadBalancingConstraint || criticalPathConstraint || latestFinishTimeConstraint) {
-                state.candidateTasks.add(candidateTask);
-                continue;
-            }
-
-            // Update state (Location 1: Candidate Task)
-            state.remainingDuration -= taskGraph.getDuration(candidateTask);
-            List<Integer> candidateChildren = taskGraph.getChildrenList(candidateTask);
-            for (Integer candidateChild : candidateChildren) {
-                state.inDegrees[candidateChild]--;
-                if (state.inDegrees[candidateChild] == 0) {
-                    state.candidateTasks.add(candidateChild);
-                }
-            }
-
-            // Calculate information we need about constraints due to communication costs
-            int maxDataArrival = 0;
-            int processorCausingMaxDataArrival = 0;
-            int secondMaxDataArrival = 0;
-            List<Integer> parents = taskGraph.getParentsList(candidateTask);
-            for (int parent : parents) {
-                int dataArrival = state.taskStartTimes[parent] + taskGraph.getDuration(parent) + taskGraph.getCommCost(parent, candidateTask);
-                if (dataArrival >= maxDataArrival) {
-                    if (state.scheduledOn[parent] != processorCausingMaxDataArrival) {
-                        secondMaxDataArrival = maxDataArrival;
-                    }
-                    maxDataArrival = dataArrival;
-                    processorCausingMaxDataArrival = state.scheduledOn[parent];
-
-                } else if (dataArrival >= secondMaxDataArrival) {
-                    if (state.scheduledOn[parent] != processorCausingMaxDataArrival) {
-                        secondMaxDataArrival = dataArrival;
+                        for (int i = 0; i < bestStartTime.length; i++) {
+                            bestScheduledOn[i] = state.scheduledOn[i];
+                            bestStartTime[i] = state.taskStartTimes[i];
+                        }
                     }
                 }
+                return;
             }
 
-
-            // Deep copy of candidateList is used in next recursive iteration
-            boolean hasBeenScheduledAtStart = false;
-            for (int candidateProcessor = 0; candidateProcessor < numProcessors; candidateProcessor++) { // Iterate through processors
-                // Avoid processor isomorphism
-                if (state.processorFinishTimes[candidateProcessor] == 0) {
-                    if (hasBeenScheduledAtStart) {
-                        // Skip duplicated search space
-                        continue;
-                    } else {
-                        hasBeenScheduledAtStart = true;
-                    }
-                }
-
-                // Find earliest time to schedule candidate task on candidate processor
-                int earliestStartTimeOnCurrentProcessor = state.processorFinishTimes[candidateProcessor];
-                if (processorCausingMaxDataArrival != candidateProcessor) {
-                    earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, maxDataArrival);
+            // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
+            // If we have seen an equivalent schedule we do not need to proceed
+            int hashCode = PartialSchedule.generateHashCode(state.taskStartTimes, state.scheduledOn, numProcessors);
+            synchronized (this) {
+                if (seenSchedules.contains(hashCode)) {
+                    return;
                 } else {
-                    earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, secondMaxDataArrival);
+                    seenSchedules.add(hashCode);
+                }
+            }
+
+            // Information we need about the current schedule
+            // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
+            int loadBalancedRemainingTime = (int) Math.ceil(state.remainingDuration / (double) numProcessors);
+
+            int earliestProcessorFinishTime = Integer.MAX_VALUE;
+            int latestProcessorFinishTime = 0;
+            for (int l = 0; l < numProcessors; l++) {
+                earliestProcessorFinishTime = Math.min(state.processorFinishTimes[l], earliestProcessorFinishTime);
+                latestProcessorFinishTime = Math.max(state.processorFinishTimes[l], latestProcessorFinishTime);
+            }
+
+            int longestCriticalPath = 0;
+            for (int task : state.candidateTasks) {
+                int criticalPath = maxLengthToExitNode[task];
+                if (criticalPath > longestCriticalPath) {
+                    longestCriticalPath = criticalPath;
+                }
+            }
+
+            // Iterate through tasks
+            state.candidateTasks.sort(Comparator.comparingInt(a -> nodePriorities[a]));
+            HashSet<Integer> seenTasks = new HashSet<>();
+            for (int i = 0; i < state.candidateTasks.size(); i++) {
+                List<RecursiveSearch> executableList = new ArrayList<>();
+
+                int candidateTask = state.candidateTasks.remove();
+                if (seenTasks.contains(candidateTask)) {
+                    state.candidateTasks.add(candidateTask);
+                    continue;
+                } else {
+                    ArrayList<Integer> equivalentNodes = equivalentNodesList[candidateTask];
+                    seenTasks.addAll(equivalentNodes);
                 }
 
-                // Exit conditions 2: tighter constraint now that we have selected the processor
-                criticalPathConstraint = earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[candidateTask] >= bestFinishTime;
-                if (criticalPathConstraint) {
+                // Exit conditions 1
+                boolean loadBalancingConstraint = earliestProcessorFinishTime + loadBalancedRemainingTime >= bestFinishTime;
+                boolean criticalPathConstraint = earliestProcessorFinishTime + longestCriticalPath >= bestFinishTime;
+                boolean latestFinishTimeConstraint = latestProcessorFinishTime >= bestFinishTime;
+                if (loadBalancingConstraint || criticalPathConstraint || latestFinishTimeConstraint) {
+                    state.candidateTasks.add(candidateTask);
                     continue;
                 }
 
-                // Update state (Location 2: Processors)
-                int prevFinishTime = state.processorFinishTimes[candidateProcessor];
-                state.processorFinishTimes[candidateProcessor] = earliestStartTimeOnCurrentProcessor + taskGraph.getDuration(candidateTask);
-                state.scheduledOn[candidateTask] = candidateProcessor;
-                state.taskStartTimes[candidateTask] = earliestStartTimeOnCurrentProcessor;
-
-                recursiveSearch(state.getDeepCopy());
-
-                boolean scheduled = false;
-                for(int futureIndex = 0 ; futureIndex < threadsFutures.length; futureIndex++){
-                    Future<Void> future  = threadsFutures[futureIndex];
-                    if(future.isDone()) {
-                        javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<Void>() {
-                            @Override protected Void call() throws Exception {
-                                recursiveSearch(state.getDeepCopy());
-                                return null;
-                            }
-                        };
-                        threadsFutures[futureIndex] = (Future<Void>)executor.submit(task);
-                        scheduled = true;
-                        break;
+                // Update state (Location 1: Candidate Task)
+                state.remainingDuration -= taskGraph.getDuration(candidateTask);
+                List<Integer> candidateChildren = taskGraph.getChildrenList(candidateTask);
+                for (Integer candidateChild : candidateChildren) {
+                    state.inDegrees[candidateChild]--;
+                    if (state.inDegrees[candidateChild] == 0) {
+                        state.candidateTasks.add(candidateChild);
                     }
                 }
-                if(!scheduled) {
-                    recursiveSearch(state.getDeepCopy());
+
+                // Calculate information we need about constraints due to communication costs
+                int maxDataArrival = 0;
+                int processorCausingMaxDataArrival = 0;
+                int secondMaxDataArrival = 0;
+                List<Integer> parents = taskGraph.getParentsList(candidateTask);
+                for (int parent : parents) {
+                    int dataArrival = state.taskStartTimes[parent] + taskGraph.getDuration(parent) + taskGraph.getCommCost(parent, candidateTask);
+                    if (dataArrival >= maxDataArrival) {
+                        if (state.scheduledOn[parent] != processorCausingMaxDataArrival) {
+                            secondMaxDataArrival = maxDataArrival;
+                        }
+                        maxDataArrival = dataArrival;
+                        processorCausingMaxDataArrival = state.scheduledOn[parent];
+
+                    } else if (dataArrival >= secondMaxDataArrival) {
+                        if (state.scheduledOn[parent] != processorCausingMaxDataArrival) {
+                            secondMaxDataArrival = dataArrival;
+                        }
+                    }
                 }
 
-                // Backtrack state (Location 2: Processors)
-                state.processorFinishTimes[candidateProcessor] = prevFinishTime;
-            }
+                // Deep copy of candidateList is used in next recursive iteration
+                boolean hasBeenScheduledAtStart = false;
+                for (int candidateProcessor = 0; candidateProcessor < numProcessors; candidateProcessor++) { // Iterate through processors
+                    // Avoid processor isomorphism
+                    if (state.processorFinishTimes[candidateProcessor] == 0) {
+                        if (hasBeenScheduledAtStart) {
+                            // Skip duplicated search space
+                            continue;
+                        } else {
+                            hasBeenScheduledAtStart = true;
+                        }
+                    }
 
-            // Backtrack state (Location 1: Candidate Task)
-            for (Integer candidateChild : candidateChildren) {
-                // revert changes made to children
-                state.inDegrees[candidateChild]++;
-                if (state.inDegrees[candidateChild] == 1) {
-                    state.candidateTasks.removeLast();
+                    // Find earliest time to schedule candidate task on candidate processor
+                    int earliestStartTimeOnCurrentProcessor = state.processorFinishTimes[candidateProcessor];
+                    if (processorCausingMaxDataArrival != candidateProcessor) {
+                        earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, maxDataArrival);
+                    } else {
+                        earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, secondMaxDataArrival);
+                    }
+
+                    // Exit conditions 2: tighter constraint now that we have selected the processor
+                    criticalPathConstraint = earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[candidateTask] >= bestFinishTime;
+                    if (criticalPathConstraint) {
+                        continue;
+                    }
+
+                    // Update state (Location 2: Processors)
+                    int prevFinishTime = state.processorFinishTimes[candidateProcessor];
+                    state.processorFinishTimes[candidateProcessor] = earliestStartTimeOnCurrentProcessor + taskGraph.getDuration(candidateTask);
+                    state.scheduledOn[candidateTask] = candidateProcessor;
+                    state.taskStartTimes[candidateTask] = earliestStartTimeOnCurrentProcessor;
+
+                    RecursiveSearch recursiveSearch;
+                    try {
+                        recursiveSearch = new RecursiveSearch(state.getDeepCopy());
+                        executableList.add(recursiveSearch);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+
+                    // Backtrack state (Location 2: Processors)
+                    state.processorFinishTimes[candidateProcessor] = prevFinishTime;
                 }
+
+                // Backtrack state (Location 1: Candidate Task)
+                for (Integer candidateChild : candidateChildren) {
+                    // revert changes made to children
+                    state.inDegrees[candidateChild]++;
+                    if (state.inDegrees[candidateChild] == 1) {
+                        state.candidateTasks.removeLast();
+                    }
+                }
+                state.remainingDuration += taskGraph.getDuration(candidateTask);
+                state.candidateTasks.add(candidateTask);
+                state.taskStartTimes[candidateTask] = -1;
+                ForkJoinTask.invokeAll(executableList);
             }
-            state.remainingDuration += taskGraph.getDuration(candidateTask);
-            state.candidateTasks.add(candidateTask);
-            state.taskStartTimes[candidateTask] = -1;
         }
     }
 
@@ -249,8 +251,6 @@ public class SolutionParallel extends Solution {
      * Helper method to initialize variables used by all threads.
      */
     private void initializeGlobalVars(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
-        executor = Executors.newFixedThreadPool(1);
-        threadsFutures = new Future[1];
         this.taskGraph = taskGraph;
         this.numProcessors = numProcessors;
         maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
