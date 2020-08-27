@@ -18,5 +18,4 @@ public abstract class Solution {
     HashSet<Integer> seenSchedules = new HashSet<>();
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) throws IOException, ClassNotFoundException;
-
 }
