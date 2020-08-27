@@ -4,6 +4,7 @@
 
 ### Pre-Processing
 * #### Node Duplication
+    If nodes are exactly the same, then...SHELDON WRITE THIS
 * #### Load Balancing
 * #### Initial Greedy Schedule
 
@@ -12,6 +13,7 @@
 #### Order
 
 ### Pruning
+Since our search space is exponential, we need to find methods to prune this search space such that it becomes manageable for us to search and find the optimal schedule.
 
 * #### Equivalent Schedule
 * #### Fixed Task Order (FTO)
@@ -45,3 +47,13 @@ We check for edge cases in our algorithm to ensure that we can sort these edge c
 If there is only one processor, then all tasks should simply be scheduled sequentially on the processor with no idle time. The finish time of the optimal schedule is the sum of all the durations of the tasks. All we need to do is to find a valid order to schedule the tasks. 
 
 ## Acknowledgements
+- Oliver Sinnen,
+Reducing the solution space of optimal task scheduling,
+Computers & Operations Research,
+Volume 43,
+2014,
+Pages 201-214,
+ISSN 0305-0548,
+https://doi.org/10.1016/j.cor.2013.09.004.
+(http://www.sciencedirect.com/science/article/pii/S0305054813002542)
+- 
