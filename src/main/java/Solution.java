@@ -34,6 +34,7 @@ public class Solution {
         nodePriorities = maxLengthToExitNode; //REFACTOR;
         equivalentNodesList = PreProcessor.getNodeEquivalence(taskGraph); //REFACTOR
         recursiveSearch(candidateTasks);
+        System.out.println(bestFinishTime);
         return createOutput();
     }
 
@@ -64,14 +65,13 @@ public class Solution {
         if (seenSchedules.contains(hashCode)) {
             return;
         } else {
+            // Find if we can complete the tasks in Fixed Task Order (FTO)
+            LinkedList<Integer> ftoSorted = toFTOList(new LinkedList<>(candidateTasks));
+            if (ftoSorted != null) {
+                getFTOSchedule(ftoSorted);
+                return;
+            }
             seenSchedules.add(hashCode);
-        }
-
-        // Find if we can complete the tasks in Fixed Task Order (FTO)
-        LinkedList<Integer> ftoSorted = toFTOList(new LinkedList<>(candidateTasks));
-        if (ftoSorted != null) {
-            getFTOSchedule(ftoSorted);
-            return;
         }
 
         // Information we need about the current schedule
@@ -386,6 +386,15 @@ public class Solution {
                 }
             }
             return;
+        }
+
+        // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
+        // If we have seen an equivalent schedule we do not need to proceed
+        int hashCode = PartialSchedule.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
+        if (seenSchedules.contains(hashCode)) {
+            return;
+        } else {
+            seenSchedules.add(hashCode);
         }
 
         // Information we need about the current schedule
