@@ -12,8 +12,8 @@ public class SolutionSequential extends Solution {
     private int[] processorFinishTimes; // processorFinishTimes[i] => finishing time of the last task scheduled on processor i
     private int remainingDuration = 0; // total duration of remaining tasks to be scheduled (used for pruning)
 
-    private int[] nodePriorities;   //REFACTORRRRRRRRRRRRRRRRR
-    private ArrayList<Integer>[] equivalentNodesList;  //REFACTORRRRRRRRRRRRRRRRR
+    private int[] nodePriorities;   // a nodes priority for scheduling scheduled
+    private ArrayList<Integer>[] equivalentNodesList;  // a list of a nodes equivalent nodes
 
     private int[] bestStartTime; // bestStartTime[i] => start time of task i in best schedule found so far
     private int[] bestScheduledOn; // bestScheduledOn[i] => processor that task i is scheduled on, in best schedule
@@ -493,12 +493,6 @@ public class SolutionSequential extends Solution {
             // Backtrack: Location 2
             processorFinishTimes[candidateProcessor] = prevFinishTime;
         }
-        // Backtrack: Location 1
-        if(!taskGraph.getChildrenList(firstTask).isEmpty()) {
-            int child = taskGraph.getChildrenList(firstTask).get(0);
-            inDegrees[child]++;
-        }
-        remainingDuration += taskGraph.getDuration(firstTask);
-        taskStartTimes[firstTask] = -1;
+       return; //dont need to back tack if the current structure is an FTO
     }
 }
