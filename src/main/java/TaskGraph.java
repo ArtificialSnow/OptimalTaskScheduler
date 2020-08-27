@@ -12,6 +12,8 @@ public class TaskGraph {
 
     private List<Integer>[] parentsList;
     private List<Integer>[] childrenList;
+    private int[][] parentsAdjacencyMatrix;
+    private int[][] childrenAdjacencyMatrix;
     private int[] durations;
     private int[][] commCosts;
 
@@ -34,6 +36,8 @@ public class TaskGraph {
                 parentsList[t].add(s);
                 childrenList[s].add(t);
                 commCosts[s][t] = commCost;
+                parentsAdjacencyMatrix[t][s] = 1;
+                childrenAdjacencyMatrix[s][t] = 1;
             });
         }
     }
@@ -59,6 +63,8 @@ public class TaskGraph {
         childrenList = new List[n];
         durations = new int[n];
         commCosts = new int[n][n];
+        parentsAdjacencyMatrix = new int[n][n];
+        childrenAdjacencyMatrix = new int[n][n];
 
         for(int i = 0; i < n; i++) {
             parentsList[i] = new ArrayList<Integer>();
@@ -106,5 +112,13 @@ public class TaskGraph {
      */
     public int getCommCost(int parent, int child) {
         return commCosts[parent][child];
+    }
+
+    public int[][] getParentsAdjacencyMatrix(){
+        return parentsAdjacencyMatrix;
+    }
+
+    public int[][] getChildrenAdjacencyMatrix(){
+        return  childrenAdjacencyMatrix;
     }
 }
