@@ -1,5 +1,9 @@
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 
 public class SolutionParallel extends Solution {
     private TaskGraph taskGraph;
@@ -7,14 +11,17 @@ public class SolutionParallel extends Solution {
     private int numTasks;
 
     // does not change
-    private int[] nodePriorities;   //REFACTORRRRRRRRRRRRRRRRR
-    private ArrayList<Integer>[] equivalentNodesList;  //REFACTORRRRRRRRRRRRRRRRR
-    private int[] maxLengthToExitNode;
+    private volatile int[] nodePriorities;   //REFACTORRRRRRRRRRRRRRRRR
+    private volatile ArrayList<Integer>[] equivalentNodesList;  //REFACTORRRRRRRRRRRRRRRRR
+    private volatile int[] maxLengthToExitNode;
 
-    private int[] bestStartTime; // bestStartTime[i] => start time of task i in best schedule found so far
-    private int[] bestScheduledOn; // bestScheduledOn[i] => processor that task i is scheduled on, in best schedule
-    private int bestFinishTime; // earliest finishing time of schedules we have searched
-    HashSet<Integer> seenSchedules = new HashSet<>();
+    private volatile int[] bestStartTime; // bestStartTime[i] => start time of task i in best schedule found so far
+    private volatile int[] bestScheduledOn; // bestScheduledOn[i] => processor that task i is scheduled on, in best schedule
+    private volatile int bestFinishTime; // earliest finishing time of schedules we have searched
+    private volatile Future<Void>[] threadsFutures;
+    private volatile HashSet<Integer> seenSchedules = new HashSet<>();
+    private ExecutorService executor;
+
 
     /**
      * Creates an optimal scheduling of tasks on specified number of processors.
@@ -37,6 +44,7 @@ public class SolutionParallel extends Solution {
      * Uses DFS to try all possible schedules.
      */
     private void recursiveSearch(State state) throws IOException, ClassNotFoundException {
+        System.out.println(Thread.currentThread().getName());
         // Base case is when queue is empty, i.e. all tasks scheduled.
         if (state.candidateTasks.isEmpty()) {
             int finishTime = findMaxInArray(state.processorFinishTimes);
@@ -170,6 +178,25 @@ public class SolutionParallel extends Solution {
 
                 recursiveSearch(state.getDeepCopy());
 
+                boolean scheduled = false;
+                for(int futureIndex = 0 ; futureIndex < threadsFutures.length; futureIndex++){
+                    Future<Void> future  = threadsFutures[futureIndex];
+                    if(future.isDone()) {
+                        javafx.concurrent.Task<Void> task = new javafx.concurrent.Task<Void>() {
+                            @Override protected Void call() throws Exception {
+                                recursiveSearch(state.getDeepCopy());
+                                return null;
+                            }
+                        };
+                        threadsFutures[futureIndex] = (Future<Void>)executor.submit(task);
+                        scheduled = true;
+                        break;
+                    }
+                }
+                if(!scheduled) {
+                    recursiveSearch(state.getDeepCopy());
+                }
+
                 // Backtrack state (Location 2: Processors)
                 state.processorFinishTimes[candidateProcessor] = prevFinishTime;
             }
@@ -222,6 +249,8 @@ public class SolutionParallel extends Solution {
      * Helper method to initialize variables used by all threads.
      */
     private void initializeGlobalVars(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
+        executor = Executors.newFixedThreadPool(1);
+        threadsFutures = new Future[1];
         this.taskGraph = taskGraph;
         this.numProcessors = numProcessors;
         maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
