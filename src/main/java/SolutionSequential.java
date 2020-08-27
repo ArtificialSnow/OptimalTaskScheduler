@@ -34,6 +34,7 @@ public class SolutionSequential extends Solution {
         nodePriorities = maxLengthToExitNode; //REFACTOR;
         equivalentNodesList = PreProcessor.getNodeEquivalence(taskGraph); //REFACTOR
         recursiveSearch(candidateTasks);
+        System.out.println(bestFinishTime);
         return createOutput();
     }
 
@@ -64,14 +65,13 @@ public class SolutionSequential extends Solution {
         if (seenSchedules.contains(hashCode)) {
             return;
         } else {
+            // Find if we can complete the tasks in Fixed Task Order (FTO)
+            LinkedList<Integer> ftoSorted = toFTOList(new LinkedList<>(candidateTasks));
+            if (ftoSorted != null) {
+                getFTOSchedule(ftoSorted);
+                return;
+            }
             seenSchedules.add(hashCode);
-        }
-
-        // Find if we can complete the tasks in Fixed Task Order (FTO)
-        LinkedList<Integer> ftoSorted = toFTOList(new LinkedList<>(candidateTasks));
-        if (ftoSorted != null) {
-            getFTOSchedule(candidateTasks);
-            return;
         }
 
         // Information we need about the current schedule
@@ -86,9 +86,9 @@ public class SolutionSequential extends Solution {
         }
 
         int longestCriticalPath = 0;
-        for(int task : candidateTasks){
+        for (int task : candidateTasks) {
             int criticalPath = maxLengthToExitNode[task];
-            if (criticalPath > longestCriticalPath){
+            if (criticalPath > longestCriticalPath) {
                 longestCriticalPath = criticalPath;
             }
         }
@@ -99,7 +99,7 @@ public class SolutionSequential extends Solution {
         HashSet<Integer> seenTasks = new HashSet<>();
         for (int i = 0; i < candidateTasks.size(); i++) {
             int candidateTask = candidateTasks.remove();
-            if(seenTasks.contains(candidateTask)){
+            if (seenTasks.contains(candidateTask)) {
                 candidateTasks.add(candidateTask);
                 continue;
             } else {
@@ -306,7 +306,7 @@ public class SolutionSequential extends Solution {
         // verify if the candidate tasks are ordered by out edge cost in non-increasing order,
         // if not we do not have a FTO.
         int prevOutEdgeCost = Integer.MAX_VALUE;
-        for (int task: candidateTasks) {
+        for (int task : candidateTasks) {
             int edgeCost;
             if (taskGraph.getChildrenList(task).isEmpty()) {
                 // there is no out edge, cost is 0
@@ -345,35 +345,40 @@ public class SolutionSequential extends Solution {
                 int commCost = taskGraph.getCommCost(parent, task2);
                 task2DataReadyTime = taskStartTimes[parent] + taskGraph.getDuration(parent) + commCost;
             }
+
             if (task1DataReadyTime < task2DataReadyTime) {
                 return -1;
-            } else if (task1DataReadyTime == task2DataReadyTime) {
-                // break the tie using the out-edge cost
-                int task1OutEdgeCost = 0;
-                int task2OutEdgeCost = 0;
-                if (!taskGraph.getChildrenList(task1).isEmpty()) {
-                    int child = taskGraph.getChildrenList(task1).get(0);
-                    task1OutEdgeCost = taskGraph.getCommCost(task1, child);
-                }
-                if (!taskGraph.getChildrenList(task2).isEmpty()) {
-                    int child = taskGraph.getChildrenList(task2).get(0);
-                    task2OutEdgeCost = taskGraph.getCommCost(task2, child);
-                }
-
-                if (task1OutEdgeCost > task2OutEdgeCost) {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            } else {
+            }
+            if (task1DataReadyTime > task2DataReadyTime) {
                 return 1;
             }
+
+            // Data ready times are equal, break the tie using the out-edge cost
+            int task1OutEdgeCost = 0;
+            int task2OutEdgeCost = 0;
+            if (!taskGraph.getChildrenList(task1).isEmpty()) {
+                int child = taskGraph.getChildrenList(task1).get(0);
+                task1OutEdgeCost = taskGraph.getCommCost(task1, child);
+            }
+            if (!taskGraph.getChildrenList(task2).isEmpty()) {
+                int child = taskGraph.getChildrenList(task2).get(0);
+                task2OutEdgeCost = taskGraph.getCommCost(task2, child);
+            }
+
+            if (task1OutEdgeCost > task2OutEdgeCost) {
+                return -1;
+            }
+            if (task1OutEdgeCost < task2OutEdgeCost) {
+                return 1;
+            }
+            //Data ready times and out-edge costs are equal
+            return 0;
         });
     }
 
     public void getFTOSchedule(LinkedList<Integer> ftoSortedList) {
         // Base case
-        if(ftoSortedList.isEmpty()){
+        if (ftoSortedList.isEmpty()) {
             int finishTime = findMaxInArray(processorFinishTimes);
 
             // If schedule time is better, update bestFinishTime and best schedule
@@ -388,6 +393,15 @@ public class SolutionSequential extends Solution {
             return;
         }
 
+        // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
+        // If we have seen an equivalent schedule we do not need to proceed
+        int hashCode = PartialSchedule.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
+        if (seenSchedules.contains(hashCode)) {
+            return;
+        } else {
+            seenSchedules.add(hashCode);
+        }
+
         // Information we need about the current schedule
         // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
         int loadBalancedRemainingTime = (int) Math.ceil(remainingDuration / (double) numProcessors);
@@ -400,9 +414,9 @@ public class SolutionSequential extends Solution {
         }
 
         int longestCriticalPath = 0;
-        for(int task : ftoSortedList){
+        for (int task : ftoSortedList) {
             int criticalPath = maxLengthToExitNode[task];
-            if (criticalPath > longestCriticalPath){
+            if (criticalPath > longestCriticalPath) {
                 longestCriticalPath = criticalPath;
             }
         }
@@ -446,10 +460,15 @@ public class SolutionSequential extends Solution {
 
             // Find the min start time on this processor
             int earliestStartTimeOnCurrentProcessor = processorFinishTimes[candidateProcessor];
-            if(!taskGraph.getParentsList(firstTask).isEmpty()){
+            if (!taskGraph.getParentsList(firstTask).isEmpty()) {
                 int parent = taskGraph.getParentsList(firstTask).get(0);
-                earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, taskStartTimes[parent] + taskGraph.getDuration(parent)
-                        + taskGraph.getCommCost(parent, firstTask));
+                if (scheduledOn[parent] == candidateProcessor) {
+                    earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, taskStartTimes[parent]
+                            + taskGraph.getDuration(parent));
+                } else {
+                    earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, taskStartTimes[parent]
+                            + taskGraph.getDuration(parent) + taskGraph.getCommCost(parent, firstTask));
+                }
             }
 
             // Exit conditions 2: tighter constraint now that we have selected the processor
@@ -474,7 +493,6 @@ public class SolutionSequential extends Solution {
             // Backtrack: Location 2
             processorFinishTimes[candidateProcessor] = prevFinishTime;
         }
-
         // Backtrack: Location 1
         if(!taskGraph.getChildrenList(firstTask).isEmpty()) {
             int child = taskGraph.getChildrenList(firstTask).get(0);
