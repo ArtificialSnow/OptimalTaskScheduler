@@ -40,7 +40,8 @@
 * #### Latest Finish Time
 
 ### Edge Cases
+We check for edge cases in our algorithm to ensure that we can sort these edge cases in a faster way than other graphs.
 #### Sequential
-
+If there is only one processor, then all tasks should simply be scheduled sequentially on the processor with no idle time. The finish time of the optimal schedule is the sum of all the durations of the tasks. All we need to do is to find a valid order to schedule the tasks. 
 
 ## Acknowledgements
