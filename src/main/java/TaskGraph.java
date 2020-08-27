@@ -114,10 +114,18 @@ public class TaskGraph {
         return commCosts[parent][child];
     }
 
+    /**
+     * parentsAdjacencyMatrix[node][i] => 1 if i is a parent of node, otherwise 0
+     * @return adjacency matrix of all children of all nodes
+     */
     public int[][] getParentsAdjacencyMatrix(){
         return parentsAdjacencyMatrix;
     }
 
+    /**
+     * childrenAdjacencyMatrix[node][i] => 1 if i is a child of node, otherwise 0
+     * @return adjacency matrix of all parents of all nodes
+     */
     public int[][] getChildrenAdjacencyMatrix(){
         return  childrenAdjacencyMatrix;
     }
