@@ -33,6 +33,9 @@ public class Controller {
     private Label timerLabel;   // shows the elapsed time so far
     @FXML
     private Label statusLabel;  // shows whether the program is running or has finished
+    private boolean status;
+    private final boolean RUNNING = true;
+    private final boolean FINISHED = false;
 
     // stackedBarChart has bars equal to the number of processors, and each bar is used to
     // visualise tasks being added to the processor in the GUI
@@ -55,6 +58,7 @@ public class Controller {
 
         // Get the current time, from which elapsed time will be calculated
         long startTime = System.currentTimeMillis();
+        status = RUNNING;
 
         // Start a timer
         new AnimationTimer() {
@@ -65,25 +69,13 @@ public class Controller {
                 // Calculate the milliseconds, seconds, and minutes passed since the start of the program.
                 int milliseconds = (int) (elapsedMillis % 1000);
                 int seconds = (int) ((elapsedMillis / 1000) % 60);
-                int minutes = (int) ((elapsedMillis / 1000) / 60);
-
-                // Convert the integers above into appropriate strings with proper padding of zeros
-                String millisecondsString = milliseconds < 100
-                        ? "0" + (milliseconds < 10
-                            ? "0" + (milliseconds == 0
-                                ? "0"
-                                : milliseconds)
-                            : milliseconds)
-                        : String.valueOf(milliseconds);
-                String secondsString = (seconds < 10 ? "0" + seconds : seconds) + ".";
-                String minutesString = minutes == 0
-                        ? ""
-                        : (minutes < 10
-                            ? "0" + minutes
-                            : minutes) + ":";
+                int minutes = (int) ((elapsedMillis / (1000 * 60)) % 60);
+                int hours = (int) (elapsedMillis / (1000 * 60 * 60));
 
                 // Update the elapsed time
-                timerLabel.setText(minutesString + secondsString + millisecondsString);
+                if (status) {
+                    timerLabel.setText(String.format("%02d:%02d:%02d.%d", hours, minutes, seconds, milliseconds));
+                }
             }
         }.start();
     }
@@ -175,5 +167,11 @@ public class Controller {
      */
     public void setBestFinishTime(int bestFinishTime) {
         currentBestLabel.setText(String.valueOf(bestFinishTime));
+    }
+
+    public void setStatusFinished() {
+        statusLabel.setText("FINISHED");
+        statusLabel.setStyle("-fx-text-fill: forestgreen");
+        status = FINISHED;
     }
 }
