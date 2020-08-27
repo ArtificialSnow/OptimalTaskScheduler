@@ -1,7 +1,7 @@
 import java.io.IOException;
 import java.util.*;
 
-public class SolutionParallel {
+public class SolutionParallel extends Solution {
     private TaskGraph taskGraph;
     private int numProcessors;
     private int numTasks;

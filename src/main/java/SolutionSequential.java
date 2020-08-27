@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class SolutionSequential {
+public class SolutionSequential extends Solution {
     private TaskGraph taskGraph;
     private int numProcessors;
     private int numTasks;
