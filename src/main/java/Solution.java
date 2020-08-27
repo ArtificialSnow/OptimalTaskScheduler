@@ -380,14 +380,17 @@ public class Solution {
         int firstTask = duplicate.poll();
         remainingDuration -= taskGraph.getDuration(firstTask);
 
-        boolean taskHasChild = !taskGraph.getChildrenList(firstTask).isEmpty();
-        if (taskHasChild) {
+
+        boolean taskChildAdded = false;
+        if (!taskGraph.getChildrenList(firstTask).isEmpty()) {
             int child = taskGraph.getChildrenList(firstTask).get(0);
             inDegrees[child]--;
-            duplicate.add(child);
+            if (inDegrees[child] == 0) {
+                duplicate.add(child);
+                taskChildAdded = true;
+            }
         }
-
-
+        
         // since we have a FTO, we can schedule the first task on all processors.
         boolean hasBeenScheduledAtStart = false;
         for (int candidateProcessor = 0; candidateProcessor < numProcessors; candidateProcessor++) {
@@ -421,7 +424,7 @@ public class Solution {
             scheduledOn[firstTask] = candidateProcessor;
             taskStartTimes[firstTask] = earliestStartTimeOnCurrentProcessor;
 
-            if (!taskHasChild) {
+            if (!taskChildAdded) {
                 // it remains a FTO, we don't have to check again
                 getFTOSchedule(duplicate);
             } else {
@@ -433,7 +436,7 @@ public class Solution {
         }
 
         // Backtrack: Location 1
-        if(taskHasChild) {
+        if(!taskGraph.getChildrenList(firstTask).isEmpty()) {
             int child = taskGraph.getChildrenList(firstTask).get(0);
             inDegrees[child]++;
         }
