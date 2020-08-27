@@ -72,7 +72,7 @@ public class Driver extends Application {
             greedySchedule = g.run(taskGraph, numProcessors);
 
             // Run algorithm to find optimal schedule
-            Solution solution = new Solution();
+            SolutionSequential solution = new SolutionSequential();
             long startTime = System.currentTimeMillis();
             result = solution.run(taskGraph, numProcessors, greedySchedule.getFinishTime());
             System.out.println(System.currentTimeMillis() - startTime);
