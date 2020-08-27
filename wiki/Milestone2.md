@@ -4,8 +4,6 @@
 
 ### Pre-Processing
 * #### Node Duplication
-    If nodes are exactly the same, then...SHELDON WRITE THIS
-* #### Load Balancing
 * #### Initial Greedy Schedule
 
 ### Recursive Search and Backtracking
@@ -31,13 +29,14 @@ Since our search space is exponential, we need to find methods to prune this sea
      
    The fixed task order means that among the tasks in candidateTasks, an optimal solution should contain these tasks scheduled in this order. By fixing the task order, we are able to prune our tree by a factor of the number of tasks in candidateTasks, as we no longer need to check every single ordering. 
    
-   The fixed task order works because scheduling tasks in non-decreasing data ready time ensures the minimalisation of idle time of processors, and the scheduling of tasks in non-increasing out-edge costs ensures that the start time of any tasks that depend on our set of candidateTasks (which should be all tasks that are not currently scheduled and not in candidateTasks by definition) can be minimalised.
-   
-   **[insert proof here maybe?]**
+   The fixed task order works because scheduling tasks in non-decreasing data ready time ensures the minimalisation of idle time of processors, and the scheduling of tasks in non-increasing out-edge costs ensures that the start time of any tasks that depend on our set of candidateTasks (which should be all tasks that are not currently scheduled and not in candidateTasks by definition) can be minimalised. [More details here.](http://www.sciencedirect.com/science/article/pii/S0305054813002542)
    
    Once we get a FTO, we know that we can schedule the first task in our FTO safely. However, once the first task is scheduled, this may make changes to our list of candidate tasks. More specifically, if the task has a child, and the child becomes a candidate task, our candidateTasks may no longer form a valid FTO. For example, if the newly added child has two different children, our candidateTasks list would no longer satisfy condition i) for a FTO. If the scheduled task doesn't have a child however, our candidateTasks without the first scheduled task will still form a FTO because non of the conditions i), ii), iii) will be violated by the current tasks in candidateTasks, and the list is already in the order specified by iv).
    
 * #### Load Balancing
+    The load balanced time (LBT) is the minimum remaining time if all the remaining unscheduled tasks are spread evenly amongst the processors, not including communication costs. LBT = sum(unscheduled task durations) / number of processors.
+    
+    Since the LBT is a minimum bound on the finish time of the current schedule, if LBT is slower than the current best schedule, we know that the current schedule can't become an optimal schedule and we can prune the tree.
 * #### Critical Path
 * #### Latest Finish Time
 
