@@ -44,7 +44,10 @@ Since our search space is exponential, we need to find methods to prune this sea
     
     The critical path is another minimum bound on the finish time of the current schedule. We prune the tree if the `critical path + current elapsed time >= finish time of best schedule` so far.
     
-* #### Latest Finish Time
+* #### Latest Processor Finishing Time
+    The latest processor finishing time is the finishing time of the processor such that it is the largest among all processors. 
+    
+    The latest processor finishing time will then be a minimum bound on the finishing time of the current schedule. We stop considering this schedule if it is larger than the finish time of the current best schedule.
 
 ### Edge Cases
 We check for edge cases in our algorithm to ensure that we can sort these edge cases in a faster way than other graphs.
