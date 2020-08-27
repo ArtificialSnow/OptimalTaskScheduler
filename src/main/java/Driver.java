@@ -49,7 +49,6 @@ public class Driver {
 
         // Get whether the user wants visualisation
         if(cmd.hasOption('v')){
-            System.out.println("" + numProcessors + fileName + taskGraph.getNumberOfTasks() + numThreads);
             Visualiser.run(args, numProcessors, fileName, taskGraph.getNumberOfTasks(), numThreads);
         }
 

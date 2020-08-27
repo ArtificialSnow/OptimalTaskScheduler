@@ -11,15 +11,13 @@ public class Visualiser extends Application {
     private static String _fileName;
     private static int _numTasks;
     private static int _numThreads;
-    private Controller controller;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader  = new FXMLLoader(getClass().getResource("visualisation-view.fxml"));
         Parent root = loader.load();
 
-        controller = loader.getController();
-        System.out.println("" + _numProcessors + _fileName + _numTasks + _numThreads);
+        Controller controller = loader.getController();
         controller.setUpArgs(_numProcessors, _fileName, _numTasks, _numThreads);
         controller.addTask(0,100,10);
         controller.addTask(1,200,10);
