@@ -21,7 +21,7 @@ The `Controller` class encapsulates the logic of the GUI, while the visual compo
 ### Multi-threading
 The application runs on the main GUI thread, which is automatically managed by javaFX to poll for events.
 The solution thus needs to run on background threads, and update the polling GUI thread.
-We acheived this by refactoring the algorithm processing into subclasses of `javafx.concurrent.Task`.
+We achieved this by refactoring the algorithm processing into subclasses of `javafx.concurrent.Task`.
 This is explained in more detail [here](./Parallelisation.md).
 ## Issues
-The algorithm runs very quickly, so the live updates to the GUI can be hard to see.
+The algorithm runs very quickly with a few nodes (<14) and/or processors, so the live updates to the GUI can be hard to see.
