@@ -41,6 +41,8 @@ public class Controller {
     private StackedBarChart<String, Number> stackedBarChart;
     private CategoryAxis xAxis;
 
+    private VisualThread visualThread;
+
     // these variables are used to keep track of the order at which tasks were added so that
     // we can backtrack and remove tasks in the correct order from the stackedBarChart in the GUI
     private Stack<Integer> lastProcessor;
@@ -81,12 +83,14 @@ public class Controller {
     /**
      * This method sets up initial values for labels in the GUI. It also sets up data structures used when adding
      * and removing tasks from the stackedBarChart.
+     * @param visualThread thread on which the algorithm runs
      * @param numProcessors number of processors
      * @param inputGraphName name of the input file
      * @param numTasks number of tasks (nodes) in the input file
      * @param numThreads number of threads the solution is being run on
      */
-    public void setUpArgs(int numProcessors, String inputGraphName, int numTasks, int numThreads) {
+    public void setUpArgs(VisualThread visualThread, int numProcessors, String inputGraphName, int numTasks, int numThreads) {
+        this.visualThread = visualThread;
         inputGraphLabel.setText(inputGraphName);
         totalTasksLabel.setText(numTasks + "");
         threadCountLabel.setText(numThreads + "");
@@ -105,6 +109,10 @@ public class Controller {
             xAxisProcessors.add("Processor " + (i + 1));
         }
         xAxis.setCategories(FXCollections.observableArrayList(xAxisProcessors));
+    }
+
+    public void start() {
+        visualThread.start();
     }
 
     /**
