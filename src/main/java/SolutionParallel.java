@@ -36,6 +36,8 @@ public class SolutionParallel extends Solution {
          */
         @Override
         protected void compute() {
+            updateStateCount();
+
             // Base case is when queue is empty, i.e. all tasks scheduled.
             if (state.candidateTasks.isEmpty()) {
                 int finishTime = findMaxInArray(state.processorFinishTimes);
@@ -44,6 +46,7 @@ public class SolutionParallel extends Solution {
                     //If schedule time is better, update bestFinishTime and best schedule
                     if (finishTime < bestFinishTime) {
                         bestFinishTime = finishTime;
+                        updateCurrentBest(bestFinishTime);
 
                         for (int i = 0; i < bestStartTime.length; i++) {
                             bestScheduledOn[i] = state.scheduledOn[i];
@@ -242,6 +245,7 @@ public class SolutionParallel extends Solution {
         maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
         nodePriorities = maxLengthToExitNode; //REFACTOR;
         bestFinishTime = upperBoundTime;
+        updateCurrentBest(bestFinishTime);
         numTasks = taskGraph.getNumberOfTasks();
         equivalentNodesList = PreProcessor.getNodeEquivalence(taskGraph); //REFACTOR
         bestStartTime = new int[numTasks];
