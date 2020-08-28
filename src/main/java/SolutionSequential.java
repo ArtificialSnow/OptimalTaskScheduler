@@ -115,11 +115,26 @@ public class SolutionSequential implements Solution {
                 }
             }
 
-            // Calculate data arrival information we need about constraints due to communication costs
-            Integer maxDataArrival = 0;
-            Integer processorCausingMaxDataArrival = 0;
-            Integer secondMaxDataArrival = 0;
-            calculateDataArrivalTimes(maxDataArrival, processorCausingMaxDataArrival, secondMaxDataArrival, candidateTask);
+            // Calculate information we need about constraints due to communication costs
+            int maxDataArrival = 0;
+            int processorCausingMaxDataArrival = 0;
+            int secondMaxDataArrival = 0;
+            List<Integer> parents = taskGraph.getParentsList(candidateTask);
+            for (int parent : parents) {
+                int dataArrival = taskStartTimes[parent] + taskGraph.getDuration(parent) + taskGraph.getCommCost(parent, candidateTask);
+                if (dataArrival >= maxDataArrival) {
+                    if (scheduledOn[parent] != processorCausingMaxDataArrival) {
+                        secondMaxDataArrival = maxDataArrival;
+                    }
+                    maxDataArrival = dataArrival;
+                    processorCausingMaxDataArrival = scheduledOn[parent];
+
+                } else if (dataArrival >= secondMaxDataArrival) {
+                    if (scheduledOn[parent] != processorCausingMaxDataArrival) {
+                        secondMaxDataArrival = dataArrival;
+                    }
+                }
+            }
 
             // Deep copy of candidateList is used in next recursive iteration
             LinkedList<Integer> nextCandidateList = new LinkedList<>(candidateTasks);
@@ -320,33 +335,6 @@ public class SolutionSequential implements Solution {
         }
 
         return true;
-    }
-
-    /**
-     * Calculate the data arrival times for the latest and second latest data arrivals of the parents of a task.
-     * @param maxDataArrival the latest data arrival time.
-     * @param processorCausingMaxDataArrival the latest data arrival processor.
-     * @param secondMaxDataArrival the second latest data arrival time.
-     * @param candidateTask the task whose parents to check
-     */
-    private void calculateDataArrivalTimes(Integer maxDataArrival, Integer processorCausingMaxDataArrival,
-                                    Integer secondMaxDataArrival, int candidateTask) {
-        List<Integer> parents = taskGraph.getParentsList(candidateTask);
-        for (int parent : parents) {
-            int dataArrival = taskStartTimes[parent] + taskGraph.getDuration(parent) +
-                    taskGraph.getCommCost(parent, candidateTask);
-            if (dataArrival >= maxDataArrival) {
-                if (scheduledOn[parent] != processorCausingMaxDataArrival) {
-                    secondMaxDataArrival = maxDataArrival;
-                }
-                maxDataArrival = dataArrival;
-                processorCausingMaxDataArrival = scheduledOn[parent];
-            } else if (dataArrival >= secondMaxDataArrival) {
-                if (scheduledOn[parent] != processorCausingMaxDataArrival) {
-                    secondMaxDataArrival = dataArrival;
-                }
-            }
-        }
     }
 
     /**
