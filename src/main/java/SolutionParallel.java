@@ -53,23 +53,33 @@ public class SolutionParallel extends Solution {
         @Override
         protected void compute() {
 
-                // Base case
-                if (state.candidateTasks.isEmpty()) {
-                    int finishTime = findMaxInArray(state.processorFinishTimes);
+            // Base case
+            if (state.candidateTasks.isEmpty()) {
+                int finishTime = findMaxInArray(state.processorFinishTimes);
 
-                    // If schedule time is better, update bestFinishTime and best schedule
-                    synchronized (this) {
-                        if (finishTime < bestFinishTime) {
-                            bestFinishTime = finishTime;
+                // If schedule time is better, update bestFinishTime and best schedule
+                synchronized (this) {
+                    if (finishTime < bestFinishTime) {
+                        bestFinishTime = finishTime;
 
-                            for (int i = 0; i < bestStartTime.length; i++) {
-                                bestScheduledOn[i] = state.scheduledOn[i];
-                                bestStartTime[i] = state.taskStartTimes[i];
-                            }
+                        for (int i = 0; i < bestStartTime.length; i++) {
+                            bestScheduledOn[i] = state.scheduledOn[i];
+                            bestStartTime[i] = state.taskStartTimes[i];
                         }
                     }
-                    return;
                 }
+                return;
+            }
+
+            int loadBalancedRemainingTime = (int) Math.ceil(state.remainingDuration / (double) numProcessors);
+
+            int earliestProcessorFinishTime = Integer.MAX_VALUE;
+            int latestProcessorFinishTime = 0;
+            for (int l = 0; l < numProcessors; l++) {
+                earliestProcessorFinishTime = Math.min(state.processorFinishTimes[l], earliestProcessorFinishTime);
+                latestProcessorFinishTime = Math.max(state.processorFinishTimes[l], latestProcessorFinishTime);
+            }
+
 
             if (isFto) {
 
@@ -85,14 +95,6 @@ public class SolutionParallel extends Solution {
 
                 // Information we need about the current schedule
                 // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
-                int loadBalancedRemainingTime = (int) Math.ceil(state.remainingDuration / (double) numProcessors);
-
-                int earliestProcessorFinishTime = Integer.MAX_VALUE;
-                int latestProcessorFinishTime = 0;
-                for (int l = 0; l < numProcessors; l++) {
-                    earliestProcessorFinishTime = Math.min(state.processorFinishTimes[l], earliestProcessorFinishTime);
-                    latestProcessorFinishTime = Math.max(state.processorFinishTimes[l], latestProcessorFinishTime);
-                }
 
                 int longestCriticalPath = 0;
                 for (int task : state.candidateTasks) {
@@ -224,18 +226,6 @@ public class SolutionParallel extends Solution {
                     return;
                 }
                 seenSchedules.add(hashCode);
-
-
-                // Information we need about the current schedule
-                // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
-                int loadBalancedRemainingTime = (int) Math.ceil(state.remainingDuration / (double) numProcessors);
-
-                int earliestProcessorFinishTime = Integer.MAX_VALUE;
-                int latestProcessorFinishTime = 0;
-                for (int l = 0; l < numProcessors; l++) {
-                    earliestProcessorFinishTime = Math.min(state.processorFinishTimes[l], earliestProcessorFinishTime);
-                    latestProcessorFinishTime = Math.max(state.processorFinishTimes[l], latestProcessorFinishTime);
-                }
 
                 int longestCriticalPath = 0;
                 for (int task : state.candidateTasks) {
