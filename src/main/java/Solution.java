@@ -16,15 +16,10 @@ public abstract class Solution {
     protected volatile int bestFinishTime; // earliest finishing time of schedules we have searched
     protected volatile HashSet<Integer> seenSchedules = new HashSet<>();
 
-    protected volatile int currentBest;
     protected volatile long stateCount;
     protected volatile boolean isDone;
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime);
-
-    protected synchronized void updateCurrentBest(int currentBest) {
-        this.currentBest = currentBest;
-    }
 
     protected synchronized void updateStateCount() {
         this.stateCount++;

@@ -46,7 +46,7 @@ public class VisualThread extends Thread {
     }
 
     public synchronized int getCurrentBest() {
-        return solution.currentBest;
+        return solution.bestFinishTime;
     }
 
     public synchronized long getStateCount() {

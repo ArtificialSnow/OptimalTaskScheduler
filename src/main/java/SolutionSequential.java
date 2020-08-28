@@ -39,7 +39,6 @@ public class SolutionSequential extends Solution {
             //If schedule time is better, update bestFinishTime and best schedule
             if (finishTime < bestFinishTime) {
                 bestFinishTime = finishTime;
-                updateCurrentBest(bestFinishTime);
 
                 for (int i = 0; i < bestStartTime.length; i++) {
                     bestScheduledOn[i] = scheduledOn[i];
@@ -201,7 +200,6 @@ public class SolutionSequential extends Solution {
 
         maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
         bestFinishTime = upperBoundTime;
-        updateCurrentBest(bestFinishTime);
         numTasks = taskGraph.getNumberOfTasks();
 
         inDegrees = new int[numTasks];
@@ -377,7 +375,6 @@ public class SolutionSequential extends Solution {
             // If schedule time is better, update bestFinishTime and best schedule
             if (finishTime < bestFinishTime) {
                 bestFinishTime = finishTime;
-                updateCurrentBest(bestFinishTime);
 
                 for (int i = 0; i < bestStartTime.length; i++) {
                     bestScheduledOn[i] = scheduledOn[i];
