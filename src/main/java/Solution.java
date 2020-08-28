@@ -18,15 +18,11 @@ public abstract class Solution {
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) throws IOException, ClassNotFoundException;
 
-    protected void updateTasksScheduled(int tasksScheduled) {
-        // DO NOTHING
-    }
-
     protected void updateCurrentBest(int currentBest) {
         // DO NOTHING
     }
 
-    protected void updateStateCount(int stateCount) {
+    protected void updateStateCount() {
         // DO NOTHING
     }
 }
