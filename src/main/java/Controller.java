@@ -58,6 +58,7 @@ public class Controller {
     private void initialize() {
         xAxis = (CategoryAxis) stackedBarChart.getXAxis();
         stackedBarChart.setLegendVisible(false);
+        timerLabel.setText("00:00:00:00");
     }
 
     /**
