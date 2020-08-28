@@ -38,18 +38,10 @@ public abstract class Solution {
 
         for (int i = 0; i < numTasks; i++) {
             if (bestScheduledOn[i] != -1) {
-                Task task = new Task(bestStartTime[i], taskGraph.getDuration(i));
+                Task task = new Task(bestStartTime[i], taskGraph.getDuration(i), false);
                 bestSchedule[bestScheduledOn[i]].add(task);
             }
         }
-
-        for (int i = 0; i < numProcessors; i++) {
-            Collections.sort(bestSchedule[i]);
-        }
         bestChanged = true;
-    }
-
-    protected synchronized void setBestChanged(boolean hasChanged) {
-        bestChanged = hasChanged;
     }
 }

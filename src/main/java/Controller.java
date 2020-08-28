@@ -99,14 +99,13 @@ public class Controller {
                     if (visualThread.getBestChanged()) {
                         currentBestLabel.setText(visualThread.getCurrentBest() + "");
                         updateStackedBarChart(visualThread.getBestSchedule());
-                        visualThread.setBestChanged(false);
                     }
                     if (isDone) {
                         stop();
                     }
                 });
             }
-        }, 0, 50);
+        }, 0, 100);
 
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -125,7 +124,7 @@ public class Controller {
                     timerLabel.setText(String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, milliseconds));
                 });
             }
-        }, 0, 50);
+        }, 0, 10);
 
     }
 
@@ -142,31 +141,51 @@ public class Controller {
      */
     public void updateStackedBarChart(List<Task>[] bestSchedule) {
         stackedBarChart.getData().clear();
-        for (int processor = 0; processor < numProcessors; processor++) {
-            processorFinishTimes[processor] = 0;
-            for (Task task : bestSchedule[processor]) {
-                addTask(task, processor);
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+
+        for (int i = 0; i < numProcessors; i++) {
+            Collections.sort(bestSchedule[i]);
+        }
+
+        for (int i = 0; i < numProcessors; i++) {
+            List<Task> processorList = bestSchedule[i];
+            if (processorList.size() != 0 && processorList.get(0).startTime != 0) {
+                Task idleTask = new Task(0, processorList.get(0).startTime, true);
+                processorList.add(idleTask);
+            }
+            int j = 1;
+            while (processorList.size() > j) {
+                Task currTask = processorList.get(j);
+                Task prevTask = processorList.get(j - 1);
+                if (currTask.startTime != prevTask.startTime + prevTask.duration) {
+                    Task idleTask = new Task(prevTask.startTime + prevTask.duration,
+                            currTask.startTime - (prevTask.startTime + prevTask.duration), true);
+                    processorList.add(j, idleTask);
+                    j++;
+                }
+                j++;
             }
         }
-    }
 
-    private void addTask(Task task, int processor) {
-        // calculate the time difference between the task start time and processor finish time
-        // update the finish time of the processor to match the finish time of the task
-        int idleTime = task.startTime - processorFinishTimes[processor];
-        processorFinishTimes[processor] = task.startTime + task.duration;
+        for (int i = 0; i < numProcessors; i++) {
+            for (int j = 0; j < bestSchedule[i].size(); j++) {
+                Task task = bestSchedule[i].get(j);
+                final XYChart.Data<String, Number> bar = new XYChart.Data<>("Processor " + (numProcessors - j), task.duration);
+                bar.nodeProperty().addListener((ov, oldNode, node) -> {
+                    if (node != null) {
+                        if (task.isIdle) {
+                            node.setStyle("-fx-bar-fill: transparent");
+                        } else {
+                            node.setStyle("-fx-bar-fill: #e9c4bc;");
+                        }
+                    }
+                });
+                series.getData().add(bar);
+            }
+        }
 
-        // create data for the idle time to the correct processor on the stackedBarChart
-        XYChart.Series<String, Number> idleSeries = new XYChart.Series<>();
-        idleSeries.getData().add(new XYChart.Data<>("Processor " + (numProcessors - processor), idleTime));
+        stackedBarChart.getData().addAll(series);
 
-        // create data for the task itself to the correct processor on the stackedBarChart
-        XYChart.Series<String, Number> taskSeries = new XYChart.Series<>();
-        taskSeries.getData().add(new XYChart.Data<>("Processor " + (numProcessors - processor), task.duration));
-
-        //  add the idle and task data to the stackedBarChart
-        stackedBarChart.getData().add(idleSeries);
-        stackedBarChart.getData().add(taskSeries);
     }
 
     /**

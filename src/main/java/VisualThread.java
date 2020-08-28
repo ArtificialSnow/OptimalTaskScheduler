@@ -64,10 +64,8 @@ public class VisualThread extends Thread {
     }
 
     public synchronized boolean getBestChanged() {
-        return solution.bestChanged;
-    }
-
-    protected synchronized void setBestChanged(boolean hasChanged) {
-        solution.bestChanged = hasChanged;
+        boolean hasChanged = solution.bestChanged;
+        solution.bestChanged = false;
+        return hasChanged;
     }
 }

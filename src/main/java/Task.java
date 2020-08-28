@@ -10,6 +10,7 @@ public class Task implements Comparable<Task> {
     int finishTime;
     int processor;
     int duration;
+    boolean isIdle;
     List<Task> parents = new ArrayList<>();
 
     /**
@@ -29,9 +30,10 @@ public class Task implements Comparable<Task> {
         this.processor = processor;
     }
 
-    public Task(int startTime, int duration) {
+    public Task(int startTime, int duration, boolean isIdle) {
         this.startTime = startTime;
         this.duration = duration;
+        this.isIdle = isIdle;
     }
 
     public int getProcessor() {
