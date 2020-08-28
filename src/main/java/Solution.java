@@ -20,7 +20,7 @@ public abstract class Solution {
     protected volatile int stateCount;
     protected volatile boolean isDone;
 
-    public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) throws IOException, ClassNotFoundException;
+    public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime);
 
     protected synchronized void updateCurrentBest(int currentBest) {
         this.currentBest = currentBest;
