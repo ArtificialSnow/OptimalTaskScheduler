@@ -18,6 +18,7 @@ public abstract class Solution {
     protected volatile long stateCount;
     protected volatile boolean isDone;
     protected volatile List<Task>[] bestSchedule;
+    protected volatile boolean bestChanged = false;
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime);
 
@@ -45,5 +46,10 @@ public abstract class Solution {
         for (int i = 0; i < numProcessors; i++) {
             Collections.sort(bestSchedule[i]);
         }
+        bestChanged = true;
+    }
+
+    protected synchronized void setBestChanged(boolean hasChanged) {
+        bestChanged = hasChanged;
     }
 }

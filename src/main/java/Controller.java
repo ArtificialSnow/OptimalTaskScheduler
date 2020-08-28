@@ -92,19 +92,21 @@ public class Controller {
             @Override
             public void run() {
                 long stateCount = visualThread.getStateCount();
-                int currentBest = visualThread.getCurrentBest();
                 boolean isDone = visualThread.isDone();
-                List<Task>[] bestSchedule = visualThread.getBestSchedule();
+
                 Platform.runLater(() -> {
                     stateCountLabel.setText(stateCount/1000 + "k");
-                    currentBestLabel.setText(currentBest + "");
-                    updateStackedBarChart(bestSchedule);
+                    if (visualThread.getBestChanged()) {
+                        currentBestLabel.setText(visualThread.getCurrentBest() + "");
+                        updateStackedBarChart(visualThread.getBestSchedule());
+                        visualThread.setBestChanged(false);
+                    }
                     if (isDone) {
                         stop();
                     }
                 });
             }
-        }, 100, 100);
+        }, 0, 50);
 
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -123,13 +125,13 @@ public class Controller {
                     timerLabel.setText(String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, milliseconds));
                 });
             }
-        }, 0, 10);
+        }, 0, 50);
 
     }
 
     private void stop() {
-        timer.cancel();
         poller.cancel();
+        timer.cancel();
     }
 
     /**

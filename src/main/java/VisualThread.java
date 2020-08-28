@@ -62,4 +62,12 @@ public class VisualThread extends Thread {
     public synchronized List<Task>[] getBestSchedule() {
         return solution.bestSchedule;
     }
+
+    public synchronized boolean getBestChanged() {
+        return solution.bestChanged;
+    }
+
+    protected synchronized void setBestChanged(boolean hasChanged) {
+        solution.bestChanged = hasChanged;
+    }
 }
