@@ -8,11 +8,12 @@ import java.util.List;
  * The TaskGraph class encapsulates tasks and their dependencies.
  */
 public class TaskGraph {
-    private Graph dotGraph;
     private int numberOfTasks;
 
     private List<Integer>[] parentsList;
     private List<Integer>[] childrenList;
+    private boolean[][] parentsAdjacencyMatrix;
+    private boolean[][] childrenAdjacencyMatrix;
     private int[] durations;
     private int[][] commCosts;
 
@@ -21,7 +22,6 @@ public class TaskGraph {
      * @param dotGraph The original dot file data parsed by GraphStream.
      */
     public TaskGraph(Graph dotGraph){
-        this.dotGraph = dotGraph;
         numberOfTasks = dotGraph.getNodeCount();
         initializeDataStructures(numberOfTasks);
 
@@ -36,6 +36,8 @@ public class TaskGraph {
                 parentsList[t].add(s);
                 childrenList[s].add(t);
                 commCosts[s][t] = commCost;
+                parentsAdjacencyMatrix[t][s] = true;
+                childrenAdjacencyMatrix[s][t] = true;
             });
         }
     }
@@ -61,6 +63,8 @@ public class TaskGraph {
         childrenList = new List[n];
         durations = new int[n];
         commCosts = new int[n][n];
+        parentsAdjacencyMatrix = new boolean[n][n];
+        childrenAdjacencyMatrix = new boolean[n][n];
 
         for(int i = 0; i < n; i++) {
             parentsList[i] = new ArrayList<Integer>();
@@ -68,12 +72,6 @@ public class TaskGraph {
         }
     }
 
-    /**
-     * @return reference to the original dot file data parsed by GraphStream.
-     */
-    public Graph getDotGraph() {
-        return dotGraph;
-    }
 
     /**
      * @return the number of tasks in the task graph.
@@ -114,5 +112,21 @@ public class TaskGraph {
      */
     public int getCommCost(int parent, int child) {
         return commCosts[parent][child];
+    }
+
+    /**
+     * parentsAdjacencyMatrix[node][i] => 1 if i is a parent of node, otherwise 0
+     * @return adjacency matrix of all children of all nodes
+     */
+    public boolean[][] getParentsAdjacencyMatrix(){
+        return parentsAdjacencyMatrix;
+    }
+
+    /**
+     * childrenAdjacencyMatrix[node][i] => 1 if i is a child of node, otherwise 0
+     * @return adjacency matrix of all parents of all nodes
+     */
+    public boolean[][] getChildrenAdjacencyMatrix(){
+        return  childrenAdjacencyMatrix;
     }
 }

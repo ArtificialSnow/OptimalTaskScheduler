@@ -1,4 +1,5 @@
-import java.util.List;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class PreProcessor {
 
@@ -33,4 +34,66 @@ public class PreProcessor {
         lengths[node] = maxLength + taskGraph.getDuration(node);
         return lengths[node];
     }
+
+
+    public static ArrayList<Integer>[] getNodeEquivalence(TaskGraph taskGraph){
+        HashSet<Integer> seen = new HashSet<>();
+        int numTasks = taskGraph.getNumberOfTasks();
+        ArrayList<Integer>[] equivalentNodesList = new ArrayList[numTasks];
+
+        for(int i = 0; i<numTasks; i++) {
+            if (!seen.contains(i)) {
+                ArrayList<Integer> equivalentNodes = new ArrayList<>();
+                equivalentNodes.add(i);
+                for (int j = 0; j < numTasks; j++) {
+                    if (j != i && !seen.contains(j)) {
+                        boolean equivalent = compare(i, j, taskGraph);
+                        if (equivalent) {
+                            equivalentNodes.add(j);
+                        }
+                    }
+                }
+                for (int j = 0; j < equivalentNodes.size(); j++) {
+                    equivalentNodesList[equivalentNodes.get(j)] = equivalentNodes;
+                    seen.add(equivalentNodes.get(j));
+                }
+            }
+        }
+        return equivalentNodesList;
+    }
+
+    private static boolean compare(int a, int b, TaskGraph taskGraph){
+        if(taskGraph.getDuration(a) != taskGraph.getDuration(b)) {
+            return false;
+        }
+
+        List<Integer> aParents = taskGraph.getParentsList(a);
+        List<Integer> bParents = taskGraph.getParentsList(b);
+        List<Integer> aChildren = taskGraph.getChildrenList(a);;
+        List<Integer> bChildren = taskGraph.getChildrenList(b);
+
+        // the two tasks are only equal if they have the same parents and children.
+        if((aParents.size() != bParents.size()) || (aChildren.size() != bChildren.size())){
+            return false;
+        }
+
+        int numTasks = taskGraph.getNumberOfTasks();
+        boolean[][] parentsAdjacencyMatrix = taskGraph.getParentsAdjacencyMatrix();
+        boolean[][] childrenAdjacencyMatrix = taskGraph.getChildrenAdjacencyMatrix();
+        for(int i = 0; i < numTasks; i++){
+            if(parentsAdjacencyMatrix[a][i] != parentsAdjacencyMatrix[b][i] || childrenAdjacencyMatrix[a][i] != childrenAdjacencyMatrix[b][i]){
+                return false;
+            }
+            if(parentsAdjacencyMatrix[a][i]) {
+                return taskGraph.getCommCost(i,a) == taskGraph.getCommCost(i,b);
+            }
+            if(childrenAdjacencyMatrix[a][i]) {
+                return taskGraph.getCommCost(a,i) == taskGraph.getCommCost(b,i);
+            }
+        }
+
+        return true;
+    }
+
+
 }
