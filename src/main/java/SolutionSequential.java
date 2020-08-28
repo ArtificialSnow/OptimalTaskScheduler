@@ -1,11 +1,15 @@
 import java.util.*;
 
-public class SolutionSequential extends Solution {
+/**
+ * The Sequential version of the solution. This is the base solution without any
+ * parallelization or visualisation elements attached.
+ */
+public class SolutionSequential implements Solution {
     private TaskGraph taskGraph;
     private int numProcessors;
     private int numTasks;
 
-    private int[] maxLengthToExitNode;
+    private int[] maxLengthToExitNode; // critical path from task i to an exit node.
     private int[] inDegrees; // inDegrees[i] => number of unscheduled parent tasks of task i
     private int[] taskStartTimes; // taskStartTimes[i] => start time of task i
     private int[] scheduledOn;  // scheduledOn[i] => the processor task i is scheduled on
@@ -29,12 +33,12 @@ public class SolutionSequential extends Solution {
      * @param upperBoundTime Upper bound of running time that the optimal solution should do at least as good as.
      * @return optimal schedule found by the run method.
      */
+    @Override
     public Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
         LinkedList<Integer> candidateTasks = initialize(taskGraph, numProcessors, upperBoundTime);
-        nodePriorities = maxLengthToExitNode; //REFACTOR;
-        equivalentNodesList = PreProcessor.getNodeEquivalence(taskGraph); //REFACTOR
         recursiveSearch(candidateTasks);
-        System.out.println(bestFinishTime);
+        System.out.println("Our optimal schedule has the finishing time: " + bestFinishTime);
+
         return createOutput();
     }
 
@@ -45,17 +49,7 @@ public class SolutionSequential extends Solution {
     private void recursiveSearch(LinkedList<Integer> candidateTasks) {
         // Base case is when queue is empty, i.e. all tasks scheduled.
         if (candidateTasks.isEmpty()) {
-            int finishTime = findMaxInArray(processorFinishTimes);
-
-            //If schedule time is better, update bestFinishTime and best schedule
-            if (finishTime < bestFinishTime) {
-                bestFinishTime = finishTime;
-
-                for (int i = 0; i < bestStartTime.length; i++) {
-                    bestScheduledOn[i] = scheduledOn[i];
-                    bestStartTime[i] = taskStartTimes[i];
-                }
-            }
+            updateState();
             return;
         }
 
@@ -85,20 +79,16 @@ public class SolutionSequential extends Solution {
             latestProcessorFinishTime = Math.max(processorFinishTimes[l], latestProcessorFinishTime);
         }
 
-        int longestCriticalPath = 0;
-        for (int task : candidateTasks) {
-            int criticalPath = maxLengthToExitNode[task];
-            if (criticalPath > longestCriticalPath) {
-                longestCriticalPath = criticalPath;
-            }
-        }
-
+        int longestCriticalPath = calculateLongestCriticalPath(candidateTasks);
 
         // Iterate through tasks
         candidateTasks.sort(Comparator.comparingInt(a -> nodePriorities[a]));
         HashSet<Integer> seenTasks = new HashSet<>();
+
         for (int i = 0; i < candidateTasks.size(); i++) {
             int candidateTask = candidateTasks.remove();
+
+            // check for node duplication
             if (seenTasks.contains(candidateTask)) {
                 candidateTasks.add(candidateTask);
                 continue;
@@ -107,11 +97,10 @@ public class SolutionSequential extends Solution {
                 seenTasks.addAll(equivalentNodes);
             }
 
-            // Exit conditions 1
-            boolean loadBalancingConstraint = earliestProcessorFinishTime + loadBalancedRemainingTime >= bestFinishTime;
-            boolean criticalPathConstraint = earliestProcessorFinishTime + longestCriticalPath >= bestFinishTime;
-            boolean latestFinishTimeConstraint = latestProcessorFinishTime >= bestFinishTime;
-            if (loadBalancingConstraint || criticalPathConstraint || latestFinishTimeConstraint) {
+            // if the our schedule can never become an optimal schedule, then there is no need to continue trying
+            // this combination.
+            if (!isPotentialOptimal(earliestProcessorFinishTime, loadBalancedRemainingTime, longestCriticalPath,
+                    latestProcessorFinishTime)) {
                 candidateTasks.add(candidateTask);
                 continue;
             }
@@ -126,30 +115,14 @@ public class SolutionSequential extends Solution {
                 }
             }
 
-            // Calculate information we need about constraints due to communication costs
-            int maxDataArrival = 0;
-            int processorCausingMaxDataArrival = 0;
-            int secondMaxDataArrival = 0;
-            List<Integer> parents = taskGraph.getParentsList(candidateTask);
-            for (int parent : parents) {
-                int dataArrival = taskStartTimes[parent] + taskGraph.getDuration(parent) + taskGraph.getCommCost(parent, candidateTask);
-                if (dataArrival >= maxDataArrival) {
-                    if (scheduledOn[parent] != processorCausingMaxDataArrival) {
-                        secondMaxDataArrival = maxDataArrival;
-                    }
-                    maxDataArrival = dataArrival;
-                    processorCausingMaxDataArrival = scheduledOn[parent];
-
-                } else if (dataArrival >= secondMaxDataArrival) {
-                    if (scheduledOn[parent] != processorCausingMaxDataArrival) {
-                        secondMaxDataArrival = dataArrival;
-                    }
-                }
-            }
-
+            // Calculate data arrival information we need about constraints due to communication costs
+            Integer maxDataArrival = 0;
+            Integer processorCausingMaxDataArrival = 0;
+            Integer secondMaxDataArrival = 0;
+            calculateDataArrivalTimes(maxDataArrival, processorCausingMaxDataArrival, secondMaxDataArrival, candidateTask);
 
             // Deep copy of candidateList is used in next recursive iteration
-            LinkedList<Integer> nextCandidateList = new LinkedList<Integer>(candidateTasks);
+            LinkedList<Integer> nextCandidateList = new LinkedList<>(candidateTasks);
             boolean hasBeenScheduledAtStart = false;
             for (int candidateProcessor = 0; candidateProcessor < numProcessors; candidateProcessor++) { // Iterate through processors
                 // Avoid processor isomorphism
@@ -170,9 +143,8 @@ public class SolutionSequential extends Solution {
                     earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, secondMaxDataArrival);
                 }
 
-                // Exit conditions 2: tighter constraint now that we have selected the processor
-                criticalPathConstraint = earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[candidateTask] >= bestFinishTime;
-                if (criticalPathConstraint) {
+                // Pruning: tighter constraint now that we have selected the processor
+                if (earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[candidateTask] >= bestFinishTime) {
                     continue;
                 }
 
@@ -213,6 +185,9 @@ public class SolutionSequential extends Solution {
         bestFinishTime = upperBoundTime;
         numTasks = taskGraph.getNumberOfTasks();
 
+        nodePriorities = maxLengthToExitNode; //REFACTOR;
+        equivalentNodesList = PreProcessor.getNodeEquivalence(taskGraph); //REFACTOR
+
         inDegrees = new int[numTasks];
         bestStartTime = new int[numTasks];
         bestScheduledOn = new int[numTasks];
@@ -252,7 +227,6 @@ public class SolutionSequential extends Solution {
 
     /**
      * Find the maximum value integer in the array. Returns Integer.MIN_VALUE if array is empty.
-     *
      * @return maximum value.
      */
     private int findMaxInArray(int[] arr) {
@@ -265,8 +239,9 @@ public class SolutionSequential extends Solution {
     }
 
     /**
-     * @param candidateTasks
-     * @return
+     * Sorts the list of free tasks into Fixed Task Order if possible.
+     * @param candidateTasks list of free tasks yet to be scheduled.
+     * @return null if no FTO found, otherwise the FTO.
      */
     private LinkedList<Integer> toFTOList(LinkedList<Integer> candidateTasks) {
         int child = -1;
@@ -328,7 +303,77 @@ public class SolutionSequential extends Solution {
         return candidateTasks;
     }
 
+    /**
+     * Checks if the current schedule can be optimal by comparing against the
+     * current best finishing time. If it takes longer or equal time, the current
+     * schedule can't be better than the current best schedule.
+     * @return
+     */
+    private boolean isPotentialOptimal(int earliestProcessorFinishTime, int loadBalancedRemainingTime,
+                                       int longestCriticalPath, int latestProcessorFinishTime) {
+        boolean loadBalancingConstraint = earliestProcessorFinishTime + loadBalancedRemainingTime >= bestFinishTime;
+        boolean criticalPathConstraint = earliestProcessorFinishTime + longestCriticalPath >= bestFinishTime;
+        boolean latestFinishTimeConstraint = latestProcessorFinishTime >= bestFinishTime;
 
+        if (loadBalancingConstraint || criticalPathConstraint || latestFinishTimeConstraint) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Calculate the data arrival times for the latest and second latest data arrivals of the parents of a task.
+     * @param maxDataArrival the latest data arrival time.
+     * @param processorCausingMaxDataArrival the latest data arrival processor.
+     * @param secondMaxDataArrival the second latest data arrival time.
+     * @param candidateTask the task whose parents to check
+     */
+    private void calculateDataArrivalTimes(Integer maxDataArrival, Integer processorCausingMaxDataArrival,
+                                    Integer secondMaxDataArrival, int candidateTask) {
+        List<Integer> parents = taskGraph.getParentsList(candidateTask);
+        for (int parent : parents) {
+            int dataArrival = taskStartTimes[parent] + taskGraph.getDuration(parent) +
+                    taskGraph.getCommCost(parent, candidateTask);
+            if (dataArrival >= maxDataArrival) {
+                if (scheduledOn[parent] != processorCausingMaxDataArrival) {
+                    secondMaxDataArrival = maxDataArrival;
+                }
+                maxDataArrival = dataArrival;
+                processorCausingMaxDataArrival = scheduledOn[parent];
+            } else if (dataArrival >= secondMaxDataArrival) {
+                if (scheduledOn[parent] != processorCausingMaxDataArrival) {
+                    secondMaxDataArrival = dataArrival;
+                }
+            }
+        }
+    }
+
+    /**
+     * Calculates the longest critical path amongst all the candidate tasks. This is a lower
+     * bound on the finish time of this schedule.
+     * @param candidateTasks the list of unscheduled free tasks.
+     * @return the longest critical path length.
+     */
+    private int calculateLongestCriticalPath(List<Integer> candidateTasks) {
+        int longestCriticalPath = 0;
+        for (int task : candidateTasks) {
+            int criticalPath = maxLengthToExitNode[task];
+            if (criticalPath > longestCriticalPath) {
+                longestCriticalPath = criticalPath;
+            }
+        }
+
+        return longestCriticalPath;
+    }
+
+    /**
+     * Sorts the list of candidate tasks by non-decreasing data ready time. When two data ready times
+     * are equal, we use the non-increasing out-edge cost to break this tie.
+     * Data ready time = finish time of parent + communication cost between parent and task.
+     * Out-edge cost = communication cost between task and child.
+     * @param candidateTasks the list of free tasks that are still unscheduled.
+     */
     private void sortByDataReadyTime(List<Integer> candidateTasks) {
         candidateTasks.sort((task1, task2) -> {
             int task1DataReadyTime = 0;
@@ -365,31 +410,19 @@ public class SolutionSequential extends Solution {
                 task2OutEdgeCost = taskGraph.getCommCost(task2, child);
             }
 
-            if (task1OutEdgeCost > task2OutEdgeCost) {
-                return -1;
-            }
-            if (task1OutEdgeCost < task2OutEdgeCost) {
-                return 1;
-            }
-            //Data ready times and out-edge costs are equal
-            return 0;
+            return Integer.compare(task2OutEdgeCost, task1OutEdgeCost);
         });
     }
 
+    /**
+     * Given a Fixed Task Order sorted list, we know that we can safely schedule the next task.
+     * This method will schedule in FTO order.
+     * @param ftoSortedList the FTO sorted list.
+     */
     private void getFTOSchedule(LinkedList<Integer> ftoSortedList) {
         // Base case
-        if (ftoSortedList.isEmpty()) {
-            int finishTime = findMaxInArray(processorFinishTimes);
-
-            // If schedule time is better, update bestFinishTime and best schedule
-            if (finishTime < bestFinishTime) {
-                bestFinishTime = finishTime;
-
-                for (int i = 0; i < bestStartTime.length; i++) {
-                    bestScheduledOn[i] = scheduledOn[i];
-                    bestStartTime[i] = taskStartTimes[i];
-                }
-            }
+        if (ftoSortedList == null || ftoSortedList.isEmpty()) {
+            updateState();
             return;
         }
 
@@ -422,10 +455,8 @@ public class SolutionSequential extends Solution {
         }
 
         // Exit conditions 1
-        boolean loadBalancingConstraint = earliestProcessorFinishTime + loadBalancedRemainingTime >= bestFinishTime;
-        boolean criticalPathConstraint = earliestProcessorFinishTime + longestCriticalPath >= bestFinishTime;
-        boolean latestFinishTimeConstraint = latestProcessorFinishTime >= bestFinishTime;
-        if (loadBalancingConstraint || criticalPathConstraint || latestFinishTimeConstraint) {
+        if (!isPotentialOptimal(earliestProcessorFinishTime, loadBalancedRemainingTime, longestCriticalPath,
+                latestProcessorFinishTime)) {
             return;
         }
 
@@ -433,7 +464,6 @@ public class SolutionSequential extends Solution {
         LinkedList<Integer> duplicate = new LinkedList<>(ftoSortedList);
         int firstTask = duplicate.poll();
         remainingDuration -= taskGraph.getDuration(firstTask);
-
 
         boolean taskChildAdded = false;
         if (!taskGraph.getChildrenList(firstTask).isEmpty()) {
@@ -459,21 +489,11 @@ public class SolutionSequential extends Solution {
             }
 
             // Find the min start time on this processor
-            int earliestStartTimeOnCurrentProcessor = processorFinishTimes[candidateProcessor];
-            if (!taskGraph.getParentsList(firstTask).isEmpty()) {
-                int parent = taskGraph.getParentsList(firstTask).get(0);
-                if (scheduledOn[parent] == candidateProcessor) {
-                    earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, taskStartTimes[parent]
-                            + taskGraph.getDuration(parent));
-                } else {
-                    earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor, taskStartTimes[parent]
-                            + taskGraph.getDuration(parent) + taskGraph.getCommCost(parent, firstTask));
-                }
-            }
+            int earliestStartTimeOnCurrentProcessor = findEarliestStartTimeOnCurrentProcessor(candidateProcessor,
+                    firstTask);
 
             // Exit conditions 2: tighter constraint now that we have selected the processor
-            criticalPathConstraint = earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[firstTask] >= bestFinishTime;
-            if (criticalPathConstraint) {
+            if (earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[firstTask] >= bestFinishTime) {
                 continue;
             }
 
@@ -500,5 +520,46 @@ public class SolutionSequential extends Solution {
         }
         remainingDuration += taskGraph.getDuration(firstTask);
         taskStartTimes[firstTask] = -1;
+    }
+
+    /**
+     * Find the earliest start time on the current processor.
+     * @param candidateProcessor the processor to check.
+     * @param candidateTask the task to schedule.
+     * @return earliest start time.
+     */
+    private int findEarliestStartTimeOnCurrentProcessor(int candidateProcessor, int candidateTask) {
+        int earliestStartTimeOnCurrentProcessor = processorFinishTimes[candidateProcessor];
+        if (!taskGraph.getParentsList(candidateTask).isEmpty()) {
+            int parent = taskGraph.getParentsList(candidateTask).get(0);
+            if (scheduledOn[parent] == candidateProcessor) {
+                earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor,
+                        taskStartTimes[parent] + taskGraph.getDuration(parent));
+            } else {
+                earliestStartTimeOnCurrentProcessor = Math.max(earliestStartTimeOnCurrentProcessor,
+                        taskStartTimes[parent] + taskGraph.getDuration(parent) +
+                                taskGraph.getCommCost(parent, candidateTask));
+            }
+        }
+
+        return earliestStartTimeOnCurrentProcessor;
+    }
+
+    /**
+     * This method should be called when a schedule is created. We will update the best
+     * schedule so far if the schedule is better.
+     */
+    private void updateState() {
+        int finishTime = findMaxInArray(processorFinishTimes);
+
+        //If schedule time is better, update bestFinishTime and best schedule
+        if (finishTime < bestFinishTime) {
+            bestFinishTime = finishTime;
+
+            for (int i = 0; i < bestStartTime.length; i++) {
+                bestScheduledOn[i] = scheduledOn[i];
+                bestStartTime[i] = taskStartTimes[i];
+            }
+        }
     }
 }

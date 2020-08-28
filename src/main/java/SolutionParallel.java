@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class SolutionParallel extends Solution {
+public class SolutionParallel implements Solution {
     private final ForkJoinPool forkJoinPool = new ForkJoinPool(3);
 
     private TaskGraph taskGraph;
@@ -27,7 +27,8 @@ public class SolutionParallel extends Solution {
      * @param upperBoundTime Upper bound of running time that the optimal solution should do at least as good as.
      * @return optimal schedule found by the run method.
      */
-    public Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) throws IOException, ClassNotFoundException {
+    @Override
+    public Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
         initializeGlobalVars(taskGraph, numProcessors, upperBoundTime);
         State initialState = initializeState(taskGraph, numProcessors);
 
