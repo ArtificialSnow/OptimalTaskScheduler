@@ -18,6 +18,7 @@ public abstract class Solution {
 
     protected volatile int currentBest;
     protected volatile int stateCount;
+    protected volatile boolean isDone;
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) throws IOException, ClassNotFoundException;
 
@@ -26,6 +27,10 @@ public abstract class Solution {
     }
 
     protected void updateStateCount() {
+        // DO NOTHING
+    }
+
+    protected void setDone() {
         // DO NOTHING
     }
 }

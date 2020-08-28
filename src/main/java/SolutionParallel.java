@@ -20,6 +20,7 @@ public class SolutionParallel extends Solution {
         RecursiveSearch recursiveSearch = new RecursiveSearch(initialState);
         forkJoinPool.invoke(recursiveSearch);
 
+        setDone();
         return createOutput();
     }
 

@@ -21,6 +21,7 @@ public class SolutionSequential extends Solution {
         equivalentNodesList = PreProcessor.getNodeEquivalence(taskGraph); //REFACTOR
         recursiveSearch(candidateTasks);
         System.out.println(bestFinishTime);
+        setDone();
         return createOutput();
     }
 
