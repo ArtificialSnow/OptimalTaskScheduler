@@ -42,6 +42,7 @@ public class Visualiser extends Application {
         controller.addTask(3,100,100);
         controller.addTask(1,1000,500);
         controller.addTask(1,130,1500);
+        controller.setStatusFinished();
     }
 
     public static void run(String[] args, int numProcessors, String fileName, int numTasks, int numThreads) {
