@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class SolutionParallel extends Solution {
+public class SolutionParallel implements Solution {
     private final ForkJoinPool forkJoinPool = new ForkJoinPool(3);
 
     private TaskGraph taskGraph;
