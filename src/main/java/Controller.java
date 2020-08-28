@@ -4,11 +4,10 @@ import javafx.fxml.FXML;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * Controller class for the visualisation (GUI). It connects to the fxml file.
@@ -24,8 +23,6 @@ public class Controller {
     @FXML
     private Label threadCountLabel; // shows the number of threads used to compute the solution
     @FXML
-    private Label tasksScheduledLabel;   // shows the number of tasks scheduled in the current state
-    @FXML
     private Label currentBestLabel; // shows the finish time of the shortest computed schedule so far
     @FXML
     private Label stateCountLabel;  // shows the number of states searched so far
@@ -33,6 +30,9 @@ public class Controller {
     private Label timerLabel;   // shows the elapsed time so far
     @FXML
     private Label statusLabel;  // shows whether the program is running or has finished
+
+    @FXML
+    private Button startButton;
     private boolean isRunning;  // true is program still computing optimal solution, false otherwise
 
     // stackedBarChart has bars equal to the number of processors, and each bar is used to
@@ -125,8 +125,6 @@ public class Controller {
      * @param startTime the start time of the task
      */
     public void addTask(int processor, int duration, int startTime) {
-        // increment tasks scheduled on GUI
-        tasksScheduledLabel.setText("" + (Integer.parseInt(tasksScheduledLabel.getText()) + 1));
         // this is the most recent processor a task has been added to
         lastProcessor.push(processor);
 
@@ -152,8 +150,6 @@ public class Controller {
      * This algorithm removes the last task added from the stackedBarChart on the GUI
      */
     public void removeLast() {
-        // decrement tasks scheduled on GUI
-        tasksScheduledLabel.setText("" + (Integer.parseInt(tasksScheduledLabel.getText()) - 1));
 
         // remove twice because we remove the task and idle time
         stackedBarChart.getData().remove(stackedBarChart.getData().size()-1);
