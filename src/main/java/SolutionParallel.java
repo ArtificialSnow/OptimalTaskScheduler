@@ -80,6 +80,17 @@ public class SolutionParallel extends Solution {
                 latestProcessorFinishTime = Math.max(state.processorFinishTimes[l], latestProcessorFinishTime);
             }
 
+            // Information we need about the current schedule
+            // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
+
+            int longestCriticalPath = 0;
+            for (int task : state.candidateTasks) {
+                int criticalPath = maxLengthToExitNode[task];
+                if (criticalPath > longestCriticalPath) {
+                    longestCriticalPath = criticalPath;
+                }
+            }
+
 
             if (isFto) {
 
@@ -91,17 +102,6 @@ public class SolutionParallel extends Solution {
                         return;
                     }
                     seenSchedules.add(hashCode);
-                }
-
-                // Information we need about the current schedule
-                // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
-
-                int longestCriticalPath = 0;
-                for (int task : state.candidateTasks) {
-                    int criticalPath = maxLengthToExitNode[task];
-                    if (criticalPath > longestCriticalPath) {
-                        longestCriticalPath = criticalPath;
-                    }
                 }
 
                 // Exit conditions 1
@@ -226,14 +226,6 @@ public class SolutionParallel extends Solution {
                     return;
                 }
                 seenSchedules.add(hashCode);
-
-                int longestCriticalPath = 0;
-                for (int task : state.candidateTasks) {
-                    int criticalPath = maxLengthToExitNode[task];
-                    if (criticalPath > longestCriticalPath) {
-                        longestCriticalPath = criticalPath;
-                    }
-                }
 
                 // Iterate through tasks
                 state.candidateTasks.sort(Comparator.comparingInt(a -> nodePriorities[a]));
