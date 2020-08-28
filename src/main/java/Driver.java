@@ -9,7 +9,7 @@ import org.graphstream.graph.Graph;
 
 import java.io.IOException;
 
-public class Driver {
+public class Driver extends Application{
     static int numProcessors;
     static int numThreads = 1;
     static String fileName;
@@ -61,7 +61,7 @@ public class Driver {
 
         // Get whether the user wants visualisation
         if(cmd.hasOption('v')){
-            //launch(args);
+            launch(args);
         }
 
         Schedule result;
@@ -96,7 +96,7 @@ public class Driver {
     }
 
 
-    /*
+
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader  = new FXMLLoader(getClass().getResource("visualisation-view.fxml"));
@@ -128,7 +128,6 @@ public class Driver {
         controller.addTask(1,1000,500);
         controller.addTask(1,130,1500);
     }
-     */
 
 
     private static CommandLine getCommandLineOptions(String[] args){
