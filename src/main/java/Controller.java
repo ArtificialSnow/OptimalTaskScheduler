@@ -120,7 +120,7 @@ public class Controller {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                int stateCount = visualThread.getStateCount();
+                long stateCount = visualThread.getStateCount();
                 int currentBest = visualThread.getCurrentBest();
                 boolean isDone = visualThread.isDone();
                 Platform.runLater(() -> {

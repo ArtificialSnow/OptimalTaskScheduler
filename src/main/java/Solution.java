@@ -17,7 +17,7 @@ public abstract class Solution {
     protected volatile HashSet<Integer> seenSchedules = new HashSet<>();
 
     protected volatile int currentBest;
-    protected volatile int stateCount;
+    protected volatile long stateCount;
     protected volatile boolean isDone;
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime);

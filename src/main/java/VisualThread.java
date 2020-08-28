@@ -49,7 +49,7 @@ public class VisualThread extends Thread {
         return solution.currentBest;
     }
 
-    public synchronized int getStateCount() {
+    public synchronized long getStateCount() {
         return solution.stateCount;
     }
 
