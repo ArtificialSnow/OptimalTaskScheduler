@@ -24,7 +24,7 @@ public class Controller {
     @FXML
     private Label threadCountLabel; // shows the number of threads used to compute the solution
     @FXML
-    private Label taskScheduledLabel;   // shows the number of tasks scheduled in the current state
+    private Label tasksScheduledLabel;   // shows the number of tasks scheduled in the current state
     @FXML
     private Label currentBestLabel; // shows the finish time of the shortest computed schedule so far
     @FXML
@@ -118,7 +118,7 @@ public class Controller {
      */
     public void addTask(int processor, int duration, int startTime) {
         // increment tasks scheduled on GUI
-        taskScheduledLabel.setText("" + (Integer.parseInt(taskScheduledLabel.getText()) + 1));
+        tasksScheduledLabel.setText("" + (Integer.parseInt(tasksScheduledLabel.getText()) + 1));
         // this is the most recent processor a task has been added to
         lastProcessor.push(processor);
 
@@ -145,7 +145,7 @@ public class Controller {
      */
     public void removeLast() {
         // decrement tasks scheduled on GUI
-        taskScheduledLabel.setText("" + (Integer.parseInt(taskScheduledLabel.getText()) - 1));
+        tasksScheduledLabel.setText("" + (Integer.parseInt(tasksScheduledLabel.getText()) - 1));
 
         // remove twice because we remove the task and idle time
         stackedBarChart.getData().remove(stackedBarChart.getData().size()-1);
