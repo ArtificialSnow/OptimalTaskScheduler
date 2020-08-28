@@ -22,15 +22,15 @@ public abstract class Solution {
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) throws IOException, ClassNotFoundException;
 
-    protected void updateCurrentBest(int currentBest) {
-        // DO NOTHING
+    protected synchronized void updateCurrentBest(int currentBest) {
+        this.currentBest = currentBest;
     }
 
-    protected void updateStateCount() {
-        // DO NOTHING
+    protected synchronized void updateStateCount() {
+        this.stateCount++;
     }
 
-    protected void setDone() {
-        // DO NOTHING
+    protected synchronized void setDone() {
+        isDone = true;
     }
 }
