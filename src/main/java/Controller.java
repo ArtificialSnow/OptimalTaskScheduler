@@ -43,6 +43,8 @@ public class Controller {
     private CategoryAxis xAxis;
 
     private VisualThread visualThread;
+    private Timer poller;
+    private Timer timer;
 
     // these variables are used to keep track of the order at which tasks were added so that
     // we can backtrack and remove tasks in the correct order from the stackedBarChart in the GUI
@@ -56,29 +58,6 @@ public class Controller {
     private void initialize() {
         xAxis = (CategoryAxis) stackedBarChart.getXAxis();
         stackedBarChart.setLegendVisible(false);
-
-        // Get the current time, from which elapsed time will be calculated
-        long startTime = System.currentTimeMillis();
-        isRunning = true;
-
-        // Start a timer
-        new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                long elapsedMillis = System.currentTimeMillis() - startTime;
-
-                // Calculate the milliseconds, seconds, and minutes passed since the start of the program.
-                int milliseconds = (int) (elapsedMillis % 1000);
-                int seconds = (int) ((elapsedMillis / 1000) % 60);
-                int minutes = (int) ((elapsedMillis / (1000 * 60)) % 60);
-                int hours = (int) (elapsedMillis / (1000 * 60 * 60));
-
-                // Update the elapsed time if the program is still running
-                if (isRunning) {
-                    timerLabel.setText(String.format("%02d:%02d:%02d.%d", hours, minutes, seconds, milliseconds));
-                }
-            }
-        }.start();
     }
 
     /**
@@ -116,19 +95,47 @@ public class Controller {
     private void start() {
         visualThread.start();
         startButton.setDisable(true);
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+        poller = new Timer();
+        poller.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 long stateCount = visualThread.getStateCount();
                 int currentBest = visualThread.getCurrentBest();
                 boolean isDone = visualThread.isDone();
                 Platform.runLater(() -> {
-                    stateCountLabel.setText(stateCount + "");
+                    stateCountLabel.setText(stateCount/1000 + "k");
                     currentBestLabel.setText(currentBest + "");
+                    if (isDone) {
+                        stop();
+                    }
+                });
+            }
+        }, 0, 100);
+
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            // Get the current time, from which elapsed time will be calculated
+            final long startTime = System.currentTimeMillis();
+
+            @Override
+            public void run() {
+                long elapsedMillis = System.currentTimeMillis() - startTime;
+                // Calculate the milliseconds, seconds, and minutes passed since the start of the program.
+                int milliseconds = (int) (elapsedMillis % 100);
+                int seconds = (int) ((elapsedMillis / 1000) % 60);
+                int minutes = (int) ((elapsedMillis / (1000 * 60)) % 60);
+                int hours = (int) (elapsedMillis / (1000 * 60 * 60));
+                Platform.runLater(() -> {
+                    timerLabel.setText(String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, milliseconds));
                 });
             }
         }, 0, 10);
+
+    }
+
+    private void stop() {
+        timer.cancel();
+        poller.cancel();
     }
 
     /**
@@ -173,21 +180,6 @@ public class Controller {
 
         // remove this processor from the last processor list, and also update its finish time
         processorFinishTimes[lastProcessor.pop()].pop();
-    }
-
-    /**
-     * This method updates the number of states visited on the GUI
-     */
-    public void incrementState() {
-        stateCountLabel.setText(String.valueOf(Integer.parseInt(stateCountLabel.getText()) + 1));
-    }
-
-    /**
-     * This method updates the current finish time label on the GUI to the new best finish time.
-     * @param bestFinishTime the finish time to update to
-     */
-    public void setBestFinishTime(int bestFinishTime) {
-        currentBestLabel.setText(String.valueOf(bestFinishTime));
     }
 
     /**
