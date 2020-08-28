@@ -52,7 +52,7 @@ public class SolutionParallel extends Solution {
          */
         @Override
         protected void compute() {
-            if (isFto) {
+
                 // Base case
                 if (state.candidateTasks.isEmpty()) {
                     int finishTime = findMaxInArray(state.processorFinishTimes);
@@ -71,12 +71,15 @@ public class SolutionParallel extends Solution {
                     return;
                 }
 
+            if (isFto) {
+
                 // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
                 // If we have seen an equivalent schedule we do not need to proceed
                 int hashCode = PartialSchedule.generateHashCode(state.taskStartTimes, state.scheduledOn, numProcessors);
-                if (seenSchedules.contains(hashCode)) {
-                    return;
-                } else {
+                synchronized (this) {
+                    if (seenSchedules.contains(hashCode)) {
+                        return;
+                    }
                     seenSchedules.add(hashCode);
                 }
 
@@ -154,7 +157,10 @@ public class SolutionParallel extends Solution {
                     }
 
                     // Exit conditions 2: tighter constraint now that we have selected the processor
-                    boolean criticalPathConstraint = earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[firstTask] >= bestFinishTime;
+                    boolean criticalPathConstraint;
+                    synchronized (this) {
+                        criticalPathConstraint = earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[firstTask] >= bestFinishTime;
+                    }
                     if (criticalPathConstraint) {
                         continue;
                     }
@@ -194,52 +200,31 @@ public class SolutionParallel extends Solution {
 
                 ForkJoinTask.invokeAll(executableList);
 
-
             } else {
-
-
-                // Base case is when queue is empty, i.e. all tasks scheduled.
-                if (state.candidateTasks.isEmpty()) {
-                    int finishTime = findMaxInArray(state.processorFinishTimes);
-
-                    synchronized (this) {
-                        //If schedule time is better, update bestFinishTime and best schedule
-                        if (finishTime < bestFinishTime) {
-                            bestFinishTime = finishTime;
-
-                            for (int i = 0; i < bestStartTime.length; i++) {
-                                bestScheduledOn[i] = state.scheduledOn[i];
-                                bestStartTime[i] = state.taskStartTimes[i];
-                            }
-                        }
-                    }
-                    return;
-                }
-
                 // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
                 // If we have seen an equivalent schedule we do not need to proceed
                 int hashCode = PartialSchedule.generateHashCode(state.taskStartTimes, state.scheduledOn, numProcessors);
                 synchronized (this) {
                     if (seenSchedules.contains(hashCode)) {
                         return;
-                    } else {
-                        // Find if we can complete the tasks in Fixed Task Order (FTO)
-                        LinkedList<Integer> ftoSorted = toFTOList(new LinkedList<>(state.candidateTasks));
-                        if (ftoSorted != null) {
-                            state.candidateTasks = ftoSorted;
-                            try {
-                                RecursiveSearch r = new RecursiveSearch(state.getDeepCopy(), true);
-                                ForkJoinTask.invokeAll(r);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            } catch (ClassNotFoundException e) {
-                                e.printStackTrace();
-                            }
-                            return;
-                        }
-                        seenSchedules.add(hashCode);
                     }
                 }
+                LinkedList<Integer> ftoSorted = toFTOList(new LinkedList<>(state.candidateTasks));
+                if (ftoSorted != null) {
+                    state.candidateTasks = ftoSorted;
+                    try {
+                        RecursiveSearch r = new RecursiveSearch(state.getDeepCopy(), true);
+                        ForkJoinTask.invokeAll(r);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                    seenSchedules.add(hashCode);
+                    return;
+                }
+                seenSchedules.add(hashCode);
+
 
                 // Information we need about the current schedule
                 // minimal remaining time IF all remaining tasks are evenly distributed amongst processors.
@@ -276,9 +261,14 @@ public class SolutionParallel extends Solution {
                     }
 
                     // Exit conditions 1
-                    boolean loadBalancingConstraint = earliestProcessorFinishTime + loadBalancedRemainingTime >= bestFinishTime;
-                    boolean criticalPathConstraint = earliestProcessorFinishTime + longestCriticalPath >= bestFinishTime;
-                    boolean latestFinishTimeConstraint = latestProcessorFinishTime >= bestFinishTime;
+                    boolean loadBalancingConstraint;
+                    boolean criticalPathConstraint;
+                    boolean latestFinishTimeConstraint;
+                    synchronized (this) {
+                        loadBalancingConstraint = earliestProcessorFinishTime + loadBalancedRemainingTime >= bestFinishTime;
+                        criticalPathConstraint = earliestProcessorFinishTime + longestCriticalPath >= bestFinishTime;
+                        latestFinishTimeConstraint = latestProcessorFinishTime >= bestFinishTime;
+                    }
                     if (loadBalancingConstraint || criticalPathConstraint || latestFinishTimeConstraint) {
                         state.candidateTasks.add(candidateTask);
                         continue;
@@ -337,7 +327,9 @@ public class SolutionParallel extends Solution {
                         }
 
                         // Exit conditions 2: tighter constraint now that we have selected the processor
-                        criticalPathConstraint = earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[candidateTask] >= bestFinishTime;
+                        synchronized (this) {
+                            criticalPathConstraint = earliestStartTimeOnCurrentProcessor + maxLengthToExitNode[candidateTask] >= bestFinishTime;
+                        }
                         if (criticalPathConstraint) {
                             continue;
                         }
