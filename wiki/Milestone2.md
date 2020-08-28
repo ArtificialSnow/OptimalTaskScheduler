@@ -1,5 +1,14 @@
 # Milestone 2
 
+The goal of Milestone 2 was to implement an algorithm which finds an optimal scheduling of tasks.
+We also created a live visualisation of the algorithm, which can optionally be enabled.
+The algorithm was also parallelised to run using a specified number of threads.
+
+For more info on each of these aspects, se below:
+- [Optimal Scheduling](./Optimal_Scheduling.md)
+- [Visualisation](./Visualisation.md)
+- [Parallelisation](./Parallelisation.md)
+
 ## Optimization
 
 ### Pre-Processing
@@ -64,4 +73,5 @@ Pages 201-214,
 ISSN 0305-0548,
 https://doi.org/10.1016/j.cor.2013.09.004.
 (http://www.sciencedirect.com/science/article/pii/S0305054813002542)
-- 
+
+
