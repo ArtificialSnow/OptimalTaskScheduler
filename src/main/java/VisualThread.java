@@ -1,5 +1,7 @@
 import org.graphstream.graph.Graph;
 
+import java.util.List;
+
 public class VisualThread extends Thread {
     private Solution solution;
     private TaskGraph taskGraph;
@@ -55,5 +57,9 @@ public class VisualThread extends Thread {
 
     public synchronized boolean isDone() {
         return solution.isDone;
+    }
+
+    public synchronized List<Task>[] getBestSchedule() {
+        return solution.bestSchedule;
     }
 }

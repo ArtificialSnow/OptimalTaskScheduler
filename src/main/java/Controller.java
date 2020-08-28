@@ -1,4 +1,3 @@
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -34,22 +33,19 @@ public class Controller {
 
     @FXML
     private Button startButton;
-    private boolean isRunning;  // true is program still computing optimal solution, false otherwise
 
     // stackedBarChart has bars equal to the number of processors, and each bar is used to
     // visualise tasks being added to the processor in the GUI
     @FXML
     private StackedBarChart<String, Number> stackedBarChart;
     private CategoryAxis xAxis;
+    private int[] processorFinishTimes;
+
+    private int numProcessors;
 
     private VisualThread visualThread;
     private Timer poller;
     private Timer timer;
-
-    // these variables are used to keep track of the order at which tasks were added so that
-    // we can backtrack and remove tasks in the correct order from the stackedBarChart in the GUI
-    private Stack<Integer> lastProcessor;
-    private Stack<Integer>[] processorFinishTimes;
 
     /**
      * This method initialises the stackedBarChart and timer for the GUI.
@@ -58,6 +54,7 @@ public class Controller {
     private void initialize() {
         xAxis = (CategoryAxis) stackedBarChart.getXAxis();
         stackedBarChart.setLegendVisible(false);
+        stackedBarChart.setAnimated(false);
         timerLabel.setText("00:00:00:00");
     }
 
@@ -75,14 +72,7 @@ public class Controller {
         inputGraphLabel.setText(inputGraphName);
         totalTasksLabel.setText(numTasks + "");
         threadCountLabel.setText(numThreads + "");
-
-        // initialise the finish time of all processors to 0
-        processorFinishTimes = new Stack[numProcessors];
-        for (int i = 0; i < numProcessors; i++) {
-            processorFinishTimes[i] = new Stack<>();
-            processorFinishTimes[i].push(0);
-        }
-        lastProcessor = new Stack<>();
+        this.numProcessors = numProcessors;
 
         // Add each processor to the xAxis for the stackedBarChart
         List<String> xAxisProcessors = new ArrayList<>();
@@ -90,6 +80,7 @@ public class Controller {
             xAxisProcessors.add("Processor " + (i + 1));
         }
         xAxis.setCategories(FXCollections.observableArrayList(xAxisProcessors));
+        processorFinishTimes = new int[numProcessors];
     }
 
     @FXML
@@ -103,15 +94,17 @@ public class Controller {
                 long stateCount = visualThread.getStateCount();
                 int currentBest = visualThread.getCurrentBest();
                 boolean isDone = visualThread.isDone();
+                List<Task>[] bestSchedule = visualThread.getBestSchedule();
                 Platform.runLater(() -> {
                     stateCountLabel.setText(stateCount/1000 + "k");
                     currentBestLabel.setText(currentBest + "");
+                    updateStackedBarChart(bestSchedule);
                     if (isDone) {
                         stop();
                     }
                 });
             }
-        }, 0, 100);
+        }, 100, 100);
 
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -140,47 +133,38 @@ public class Controller {
     }
 
     /**
-     * This method adds a task to a specific processor in the startBarChart on the GUI. When
+     * This method add tasks to specific processors in the startBarChart on the GUI. When
      * there is a gap between the start time of the task and the current finish time of the
      * processor, this method creates idle time to be added to the stackedBarChart, and
      * makes it invisible, as the bar chart cannot have gaps.
-     * @param processor the processor to add the task on
-     * @param duration the duration the task runs for
-     * @param startTime the start time of the task
      */
-    public void addTask(int processor, int duration, int startTime) {
-        // this is the most recent processor a task has been added to
-        lastProcessor.push(processor);
-
-        // calculate the time difference between the task start time and processor finish time
-        // update the finish time of the processor to match the finish time of the task
-        int idleTime = startTime - processorFinishTimes[processor].peek();
-        processorFinishTimes[processor].push(startTime + duration);
-
-        // create data for the idle time to the correct processor on the stackedBarChart
-        XYChart.Series<String, Number> idle = new XYChart.Series<>();
-        idle.getData().add(new XYChart.Data<>("Processor " + (processor + 1), idleTime));
-
-        // create data for the task itself to the correct processor on the stackedBarChart
-        XYChart.Series<String, Number> task = new XYChart.Series<>();
-        task.getData().add(new XYChart.Data<>("Processor " + (processor + 1), duration));
-
-        //  add the idle and task data to the stackedBarChart
-        stackedBarChart.getData().add(idle);
-        stackedBarChart.getData().add(task);
+    public void updateStackedBarChart(List<Task>[] bestSchedule) {
+        stackedBarChart.getData().clear();
+        for (int processor = 0; processor < numProcessors; processor++) {
+            processorFinishTimes[processor] = 0;
+            for (Task task : bestSchedule[processor]) {
+                addTask(task, processor);
+            }
+        }
     }
 
-    /**
-     * This algorithm removes the last task added from the stackedBarChart on the GUI
-     */
-    public void removeLast() {
+    private void addTask(Task task, int processor) {
+        // calculate the time difference between the task start time and processor finish time
+        // update the finish time of the processor to match the finish time of the task
+        int idleTime = task.startTime - processorFinishTimes[processor];
+        processorFinishTimes[processor] = task.startTime + task.duration;
 
-        // remove twice because we remove the task and idle time
-        stackedBarChart.getData().remove(stackedBarChart.getData().size()-1);
-        stackedBarChart.getData().remove(stackedBarChart.getData().size()-1);
+        // create data for the idle time to the correct processor on the stackedBarChart
+        XYChart.Series<String, Number> idleSeries = new XYChart.Series<>();
+        idleSeries.getData().add(new XYChart.Data<>("Processor " + (numProcessors - processor), idleTime));
 
-        // remove this processor from the last processor list, and also update its finish time
-        processorFinishTimes[lastProcessor.pop()].pop();
+        // create data for the task itself to the correct processor on the stackedBarChart
+        XYChart.Series<String, Number> taskSeries = new XYChart.Series<>();
+        taskSeries.getData().add(new XYChart.Data<>("Processor " + (numProcessors - processor), task.duration));
+
+        //  add the idle and task data to the stackedBarChart
+        stackedBarChart.getData().add(idleSeries);
+        stackedBarChart.getData().add(taskSeries);
     }
 
     /**
@@ -190,6 +174,5 @@ public class Controller {
     public void setStatusFinished() {
         statusLabel.setText("FINISHED");
         statusLabel.setStyle("-fx-text-fill: forestgreen");
-        isRunning = false;
     }
 }

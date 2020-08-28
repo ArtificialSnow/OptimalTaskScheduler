@@ -1,6 +1,5 @@
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 
 public abstract class Solution {
     protected TaskGraph taskGraph;
@@ -18,6 +17,7 @@ public abstract class Solution {
 
     protected volatile long stateCount;
     protected volatile boolean isDone;
+    protected volatile List<Task>[] bestSchedule;
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime);
 
@@ -27,5 +27,23 @@ public abstract class Solution {
 
     protected synchronized void setDone() {
         isDone = true;
+    }
+
+    protected synchronized void updateBestSchedule() {
+        bestSchedule = new List[numProcessors];
+        for (int i = 0; i < numProcessors; i++) {
+            bestSchedule[i] = new ArrayList<>();
+        }
+
+        for (int i = 0; i < numTasks; i++) {
+            if (bestScheduledOn[i] != -1) {
+                Task task = new Task(bestStartTime[i], taskGraph.getDuration(i));
+                bestSchedule[bestScheduledOn[i]].add(task);
+            }
+        }
+
+        for (int i = 0; i < numProcessors; i++) {
+            Collections.sort(bestSchedule[i]);
+        }
     }
 }

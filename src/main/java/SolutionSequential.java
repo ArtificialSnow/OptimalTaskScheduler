@@ -44,6 +44,7 @@ public class SolutionSequential extends Solution {
                     bestScheduledOn[i] = scheduledOn[i];
                     bestStartTime[i] = taskStartTimes[i];
                 }
+                updateBestSchedule();
             }
             return;
         }
@@ -200,6 +201,7 @@ public class SolutionSequential extends Solution {
 
         maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
         bestFinishTime = upperBoundTime;
+        updateBestSchedule();
         numTasks = taskGraph.getNumberOfTasks();
 
         inDegrees = new int[numTasks];
@@ -380,6 +382,7 @@ public class SolutionSequential extends Solution {
                     bestScheduledOn[i] = scheduledOn[i];
                     bestStartTime[i] = taskStartTimes[i];
                 }
+                updateBestSchedule();
             }
             return;
         }
