@@ -33,9 +33,7 @@ public class Controller {
     private Label timerLabel;   // shows the elapsed time so far
     @FXML
     private Label statusLabel;  // shows whether the program is running or has finished
-    private boolean status;
-    private final boolean RUNNING = true;
-    private final boolean FINISHED = false;
+    private boolean isRunning;  // true is program still computing optimal solution, false otherwise
 
     // stackedBarChart has bars equal to the number of processors, and each bar is used to
     // visualise tasks being added to the processor in the GUI
@@ -58,7 +56,7 @@ public class Controller {
 
         // Get the current time, from which elapsed time will be calculated
         long startTime = System.currentTimeMillis();
-        status = RUNNING;
+        isRunning = true;
 
         // Start a timer
         new AnimationTimer() {
@@ -72,8 +70,8 @@ public class Controller {
                 int minutes = (int) ((elapsedMillis / (1000 * 60)) % 60);
                 int hours = (int) (elapsedMillis / (1000 * 60 * 60));
 
-                // Update the elapsed time
-                if (status) {
+                // Update the elapsed time if the program is still running
+                if (isRunning) {
                     timerLabel.setText(String.format("%02d:%02d:%02d.%d", hours, minutes, seconds, milliseconds));
                 }
             }
@@ -119,7 +117,8 @@ public class Controller {
      * @param startTime the start time of the task
      */
     public void addTask(int processor, int duration, int startTime) {
-
+        // increment tasks scheduled on GUI
+        taskScheduledLabel.setText("" + (Integer.parseInt(taskScheduledLabel.getText()) + 1));
         // this is the most recent processor a task has been added to
         lastProcessor.push(processor);
 
@@ -145,6 +144,8 @@ public class Controller {
      * This algorithm removes the last task added from the stackedBarChart on the GUI
      */
     public void removeLast() {
+        // decrement tasks scheduled on GUI
+        taskScheduledLabel.setText("" + (Integer.parseInt(taskScheduledLabel.getText()) - 1));
 
         // remove twice because we remove the task and idle time
         stackedBarChart.getData().remove(stackedBarChart.getData().size()-1);
@@ -162,16 +163,20 @@ public class Controller {
     }
 
     /**
-     * This method updates the current finish time label on the GUI to the new best finish time
+     * This method updates the current finish time label on the GUI to the new best finish time.
      * @param bestFinishTime the finish time to update to
      */
     public void setBestFinishTime(int bestFinishTime) {
         currentBestLabel.setText(String.valueOf(bestFinishTime));
     }
 
+    /**
+     * This method stops the timer and changes the status of the visualisation
+     * from RUNNING to FINISHED.
+     */
     public void setStatusFinished() {
         statusLabel.setText("FINISHED");
         statusLabel.setStyle("-fx-text-fill: forestgreen");
-        status = FINISHED;
+        isRunning = false;
     }
 }
