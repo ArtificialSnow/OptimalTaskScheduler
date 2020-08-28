@@ -26,8 +26,4 @@ public class Visualiser extends Application {
     public void setUpArgs(VisualThread visualThread, int numProcessors, String fileName, int numTasks, int numThreads) {
         controller.setUpArgs(visualThread, numProcessors, fileName, numTasks, numThreads);
     }
-
-    public void run() {
-        controller.start();
-    }
 }

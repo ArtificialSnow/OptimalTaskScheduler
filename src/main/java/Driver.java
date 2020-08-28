@@ -66,7 +66,6 @@ public class Driver {
                     e.printStackTrace();
                 }
                 visualiser.setUpArgs(visualThread, numProcessors, fileName, taskGraph.getNumberOfTasks(), numThreads);
-                visualiser.run();
             });
         } else {
             Schedule result;

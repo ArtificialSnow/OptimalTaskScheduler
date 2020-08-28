@@ -141,7 +141,7 @@
       </VBox>
       <VBox alignment="CENTER" spacing="30.0">
          <children>
-            <Button fx:id="startButton" mnemonicParsing="false" prefHeight="35.0" prefWidth="141.6" text="Start">
+            <Button fx:id="startButton" mnemonicParsing="false" onAction="#start" prefHeight="35.0" prefWidth="141.6" text="Start">
                <font>
                   <Font size="18.0" />
                </font>

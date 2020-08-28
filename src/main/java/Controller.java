@@ -1,4 +1,5 @@
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.chart.CategoryAxis;
@@ -111,8 +112,23 @@ public class Controller {
         xAxis.setCategories(FXCollections.observableArrayList(xAxisProcessors));
     }
 
-    public void start() {
+    @FXML
+    private void start() {
         visualThread.start();
+        startButton.setDisable(true);
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                int stateCount = visualThread.getStateCount();
+                int currentBest = visualThread.getCurrentBest();
+                boolean isDone = visualThread.isDone();
+                Platform.runLater(() -> {
+                    stateCountLabel.setText(stateCount + "");
+                    currentBestLabel.setText(currentBest + "");
+                });
+            }
+        }, 0, 10);
     }
 
     /**
