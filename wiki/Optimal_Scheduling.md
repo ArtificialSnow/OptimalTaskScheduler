@@ -69,7 +69,7 @@ Since our search space is exponential, we need to find methods to prune this sea
     
     The under estimate for the finishing time of the optimal schedule if we want to schedule task i on processor j is: `earliest Start Time of task i on processor j + B Level of task i`. 
     
-    The reason why we can guarantee that this estimate is an under estimate is because all the descendants of node i must be scheduled after or at the finish time of i. 
+    The reason why we can guarantee that this estimate is an under estimate is because all the descendants of node i must be scheduled strictly after the finish time of i. 
     
 * #### Latest Processor Finishing Time
     The latest processor finishing time is the finishing time of a processor such that it is the largest among all processors. 
@@ -92,10 +92,27 @@ Since our search space is exponential, we need to find methods to prune this sea
     For a given state, there is no point in scheduling two identical tasks on the same processor. In our algorithm, when considering if to schedule a task on a processor, we check to see if we have already scheduled an equivalent task.
     
 
+* #### Processor Normalization
+    Two processors are isomorphic if they do not have any tasks scheduled on them. Scheduling a task on multiple isomorphic processors produces the same resultant state.
+    
+    In our algorithm, within a given state, we check if a task has been scheduled on a processor with a finish time at time 0. If it has, and the current processor we are considering to schedule it on is isomorphic we continue to the next processor. 
+    
+* #### State Duplication Avoidance
+    If you hash a stack, its hashcode is dependent on the order of things in the stack, when you hash a set, the order doesn't effect the hashcode. This means that, we can detect duplication that arises from swapping the tasks that have been scheduled on two processors. 
+    
+    In our algorithm, we keep the hash codes of different states and check whether the current state is a duplicate of one that we have searched before.
+    
+* #### Node equivalence
+    Two nodes are equivalent if they have the same duration, they have the same parents and children, and the edge costs between their parents and children are the same. 
+    
+    For a given state, there is no point in scheduling two identical tasks on the same processor. In our algorithm, when considering if to schedule a task on a processor, we check to see if we have already scheduled an equivalent task.
+    
+
 ### Edge Cases
     We check for edge cases in our algorithm to ensure that we can sort these edge cases in a faster way than other graphs.
 
-* #### One processor
+
+* #### Sequential
     If there is only one processor, then all tasks should simply be scheduled sequentially on the processor with no idle time. The finish time of the optimal schedule is the sum of all the durations of the tasks. All we need to do is to find a valid order to schedule the tasks. 
 
 
