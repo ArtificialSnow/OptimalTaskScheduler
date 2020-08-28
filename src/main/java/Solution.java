@@ -16,6 +16,9 @@ public abstract class Solution {
     protected volatile int bestFinishTime; // earliest finishing time of schedules we have searched
     protected volatile HashSet<Integer> seenSchedules = new HashSet<>();
 
+    protected volatile int currentBest;
+    protected volatile int stateCount;
+
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) throws IOException, ClassNotFoundException;
 
     protected void updateCurrentBest(int currentBest) {
