@@ -48,6 +48,7 @@ public class SolutionThread extends Thread {
             SequentialScheduler scheduler = new SequentialScheduler(taskGraph);
             result = scheduler.getSchedule();
             solution.setInitialSchedule(result);
+            solution.setDone();
         } else {
             // Run greedy algorithm to determine lower bound of optimal solution
             Greedy g = new Greedy();

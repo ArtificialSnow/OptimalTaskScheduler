@@ -28,7 +28,7 @@ public class SolutionSequential extends Solution {
      * @return optimal schedule found by the run method.
      */
     public Schedule run() {
-        LinkedList<Integer> candidateTasks = initialize(taskGraph, numProcessors, upperBoundTime);
+        LinkedList<Integer> candidateTasks = initialize(taskGraph, numProcessors);
 
         recursiveSearch(candidateTasks);
         System.out.println("Our optimal schedule finishes in " + bestFinishTime);
@@ -189,12 +189,11 @@ public class SolutionSequential extends Solution {
     /**
      * Helper method to initialize all the fields required for the solution.
      */
-    private LinkedList<Integer> initialize(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
+    private LinkedList<Integer> initialize(TaskGraph taskGraph, int numProcessors) {
         this.taskGraph = taskGraph;
         this.numProcessors = numProcessors;
 
         maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
-        bestFinishTime = upperBoundTime;
         numTasks = taskGraph.getNumberOfTasks();
 
         nodePriorities = maxLengthToExitNode;

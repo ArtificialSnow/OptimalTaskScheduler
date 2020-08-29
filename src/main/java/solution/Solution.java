@@ -16,8 +16,6 @@ public abstract class Solution {
     protected int numTasks;
     private boolean isVisual = false; //Flag to be used to update the GUI or not
 
-    protected int upperBoundTime; // The current best finishing time gotten from the greedy implementation.
-
     protected int[] nodePriorities; // The priority of a node to be scheduled
     protected ArrayList<Integer>[] equivalentNodesList; // index i contains a list of equivalent nodes for node i.
     protected int[] maxLengthToExitNode; // B levels of each node/task
@@ -84,7 +82,7 @@ public abstract class Solution {
      * @param schedule the initial schedule
      */
     public synchronized void setInitialSchedule(Schedule schedule) {
-        this.upperBoundTime = schedule.getFinishTime();
+        this.bestFinishTime = schedule.getFinishTime();
         if (!isVisual) return;  //If the visual is not enabled, we dont do the following computation
 
         bestSchedule = new List[numProcessors];
@@ -94,9 +92,9 @@ public abstract class Solution {
 
         Task[] tasks = schedule.getTasks();
         for (Task task : tasks) {
-            bestSchedule[task.getProcessor()].add(
-                    new Task(task.getStartTime(),task.getFinishTime() - task.getStartTime(), false)
-            );
+            Task transformedTask = new Task(task.getStartTime(),
+                    task.getFinishTime() - task.getStartTime(), false);
+            bestSchedule[task.getProcessor()].add(transformedTask);
         }
         bestChanged = true;
     }
