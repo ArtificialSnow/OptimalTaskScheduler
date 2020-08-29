@@ -16,14 +16,18 @@ public class SolutionSequential extends Solution {
     private int remainingDuration = 0; // total duration of remaining tasks to be scheduled (used for pruning)
 
     /**
-     * Creates an optimal scheduling of tasks on specified number of processors.
-     *
      * @param taskGraph      Graph containing tasks as nodes and their dependencies as edges.
      * @param numProcessors  Number of processors to schedule the tasks on.
-     * @param upperBoundTime Upper bound of running time that the optimal solution should do at least as good as.
+     */
+    public SolutionSequential (TaskGraph taskGraph, int numProcessors) {
+        super(taskGraph, numProcessors);
+    }
+
+    /**
+     * Creates an optimal scheduling of tasks on specified number of processors.
      * @return optimal schedule found by the run method.
      */
-    public Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
+    public Schedule run() {
         LinkedList<Integer> candidateTasks = initialize(taskGraph, numProcessors, upperBoundTime);
 
         recursiveSearch(candidateTasks);
@@ -225,7 +229,7 @@ public class SolutionSequential extends Solution {
     private Schedule createOutput() {
         Task[] optimalSchedule = new Task[numTasks];
         for (int i = 0; i < numTasks; i++) {
-            Task t = new Task(i, bestStartTime[i],
+            Task t = new Task(bestStartTime[i],
                     bestStartTime[i] + taskGraph.getDuration(i), bestScheduledOn[i]);
             optimalSchedule[i] = t;
         }

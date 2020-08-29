@@ -47,14 +47,16 @@ public class SolutionThread extends Thread {
         if (numProcessors == 1) {
             SequentialScheduler scheduler = new SequentialScheduler(taskGraph);
             result = scheduler.getSchedule();
+            solution.setInitialSchedule(result);
         } else {
             // Run greedy algorithm to determine lower bound of optimal solution
             Greedy g = new Greedy();
             result = g.run(taskGraph, numProcessors);
+            solution.setInitialSchedule(result);
 
             // Run algorithm to find optimal schedule
             long startTime = System.currentTimeMillis();
-            Schedule optimalResult = solution.run(taskGraph, numProcessors, result.getFinishTime());
+            Schedule optimalResult = solution.run();
 
             if (optimalResult.getFinishTime() < result.getFinishTime()) {
                 result = optimalResult;

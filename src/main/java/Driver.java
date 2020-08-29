@@ -41,10 +41,14 @@ public class Driver {
         numProcessors = getNumProcessors(args);
         final String outputFilePath = getOutputFilePath(cmd);
 
+        // Read input file
+        Graph dotGraph = IOParser.read(fileName);
+        taskGraph = new TaskGraph(dotGraph);
+
         // Choose to run either the sequential or the parallel version.
         Solution solution;
         if(cmd.hasOption("p")){
-            solution = new SolutionParallel();
+            solution = new SolutionParallel(taskGraph, numProcessors);
             try {
                 numThreads = Integer.parseInt(cmd.getOptionValue('p'));
                 ((SolutionParallel) solution).setNumCores(numThreads);
@@ -53,12 +57,8 @@ public class Driver {
                 System.exit(1);
             }
         } else {
-            solution = new SolutionSequential();
+            solution = new SolutionSequential(taskGraph, numProcessors);
         }
-
-        // Read input file
-        Graph dotGraph = IOParser.read(fileName);
-        taskGraph = new TaskGraph(dotGraph);
 
         // Choose whether to run visualisation.
         if(cmd.hasOption('v')) {
@@ -174,7 +174,7 @@ public class Driver {
 
             // Run algorithm to find optimal schedule
             long startTime = System.currentTimeMillis();
-            Schedule optimalResult = solution.run(taskGraph, numProcessors, result.getFinishTime());
+            Schedule optimalResult = solution.run();
 
             if (optimalResult.getFinishTime() < result.getFinishTime()) {
                 result = optimalResult;
