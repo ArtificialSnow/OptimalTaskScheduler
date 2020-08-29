@@ -131,8 +131,10 @@ public class Controller {
             stateCountLabel.setText(stateCount + "");
         } else if (stateCount < 1000000) {
             stateCountLabel.setText(stateCount/1000 + "K");
-        } else {
+        } else if (stateCount < 1000000000) {
             stateCountLabel.setText(stateCount/1000000 + "M");
+        } else {
+            stateCountLabel.setText(stateCount/1000000000 + "B");
         }
     }
 
