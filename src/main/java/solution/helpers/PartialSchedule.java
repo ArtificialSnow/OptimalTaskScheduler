@@ -13,7 +13,7 @@ import java.util.Stack;
  */
 public class PartialSchedule {
 
-    /**
+     /**
      * Generates a hashcode that represents a partial schedule.
      * The hashcode is used to check whether we have explored an equivalent partial schedule.
      * The hashcode is generated from the start times and which processor each task in scheduled on,
