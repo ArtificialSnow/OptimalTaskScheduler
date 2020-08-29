@@ -6,6 +6,7 @@ public class SolutionSequential extends Solution {
     private int[] scheduledOn;  // scheduledOn[i] => the processor task i is scheduled on
     private int[] processorFinishTimes; // processorFinishTimes[i] => finishing time of the last task scheduled on processor i
     private int remainingDuration = 0; // total duration of remaining tasks to be scheduled (used for pruning)
+    private int previousProcessor = -1;
 
     /**
      * Creates an optimal scheduling of tasks on specified number of processors.
@@ -105,10 +106,13 @@ public class SolutionSequential extends Solution {
             // Update state (Location 1: Candidate Task)
             remainingDuration -= taskGraph.getDuration(candidateTask);
             List<Integer> candidateChildren = taskGraph.getChildrenList(candidateTask);
+
+            boolean childAdded = false;
             for (Integer candidateChild : candidateChildren) {
                 inDegrees[candidateChild]--;
                 if (inDegrees[candidateChild] == 0) {
                     candidateTasks.add(candidateChild);
+                    childAdded = true;
                 }
             }
 
@@ -148,6 +152,11 @@ public class SolutionSequential extends Solution {
                     }
                 }
 
+                //Partial duplicate avoidance
+                if(!childAdded && candidateProcessor < previousProcessor) {
+                    continue;
+                }
+
                 // Find earliest time to schedule candidate task on candidate processor
                 int earliestStartTimeOnCurrentProcessor = processorFinishTimes[candidateProcessor];
                 if (processorCausingMaxDataArrival != candidateProcessor) {
@@ -164,6 +173,8 @@ public class SolutionSequential extends Solution {
 
                 // Update state (Location 2: Processors)
                 int prevFinishTime = processorFinishTimes[candidateProcessor];
+                int oldPreviousProcessor = previousProcessor;
+                previousProcessor = candidateProcessor;
                 processorFinishTimes[candidateProcessor] = earliestStartTimeOnCurrentProcessor + taskGraph.getDuration(candidateTask);
                 scheduledOn[candidateTask] = candidateProcessor;
                 taskStartTimes[candidateTask] = earliestStartTimeOnCurrentProcessor;
@@ -172,6 +183,7 @@ public class SolutionSequential extends Solution {
 
                 // Backtrack state (Location 2: Processors)
                 processorFinishTimes[candidateProcessor] = prevFinishTime;
+                previousProcessor = oldPreviousProcessor;
             }
 
             // Backtrack state (Location 1: Candidate Task)
@@ -465,6 +477,8 @@ public class SolutionSequential extends Solution {
 
             // Update the state: Location 2
             int prevFinishTime = processorFinishTimes[candidateProcessor];
+            int oldPreviousProcessor = previousProcessor;
+            previousProcessor = candidateProcessor;
             processorFinishTimes[candidateProcessor] = earliestStartTimeOnCurrentProcessor + taskGraph.getDuration(firstTask);
             scheduledOn[firstTask] = candidateProcessor;
             taskStartTimes[firstTask] = earliestStartTimeOnCurrentProcessor;
@@ -478,6 +492,7 @@ public class SolutionSequential extends Solution {
 
             // Backtrack: Location 2
             processorFinishTimes[candidateProcessor] = prevFinishTime;
+            previousProcessor = oldPreviousProcessor;
         }
         // Backtrack: Location 1
         if(!taskGraph.getChildrenList(firstTask).isEmpty()) {
