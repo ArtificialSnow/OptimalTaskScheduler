@@ -120,14 +120,14 @@
             </HBox>
             <StackedBarChart fx:id="stackedBarChart" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" rotate="180.0">
               <xAxis>
-                <CategoryAxis rotate="180.0">
+                <CategoryAxis rotate="180.0" fx:id="xAxis">
                      <tickLabelFont>
                         <Font size="14.0" />
                      </tickLabelFont>
                   </CategoryAxis>
               </xAxis>
               <yAxis>
-                <NumberAxis side="RIGHT" tickLabelRotation="180.0">
+                <NumberAxis fx:id="yAxis" side="RIGHT" tickLabelRotation="180.0">
                      <tickLabelFont>
                         <Font size="12.0" />
                      </tickLabelFont>

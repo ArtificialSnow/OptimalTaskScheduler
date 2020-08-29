@@ -2,6 +2,7 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.StackedBarChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
@@ -38,8 +39,10 @@ public class Controller {
     // visualise tasks being added to the processor in the GUI
     @FXML
     private StackedBarChart<String, Number> stackedBarChart;
+    @FXML
     private CategoryAxis xAxis;
-    private int[] processorFinishTimes;
+    @FXML
+    private NumberAxis yAxis;
 
     private int numProcessors;
 
@@ -52,7 +55,6 @@ public class Controller {
      */
     @FXML
     private void initialize() {
-        xAxis = (CategoryAxis) stackedBarChart.getXAxis();
         stackedBarChart.setLegendVisible(false);
         stackedBarChart.setAnimated(false);
         timerLabel.setText("00:00:00:00");
@@ -77,16 +79,16 @@ public class Controller {
         // Add each processor to the xAxis for the stackedBarChart
         List<String> xAxisProcessors = new ArrayList<>();
         for (int i = 0; i < numProcessors; i++) {
-            xAxisProcessors.add("Processor " + (i + 1));
+            xAxisProcessors.add(i + "");
         }
         xAxis.setCategories(FXCollections.observableArrayList(xAxisProcessors));
-        processorFinishTimes = new int[numProcessors];
     }
 
     @FXML
     private void start() {
-        visualThread.start();
         startButton.setDisable(true);
+
+        visualThread.start();
         poller = new Timer();
         poller.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -151,15 +153,16 @@ public class Controller {
             List<Task> processorList = bestSchedule[i];
             if (processorList.size() != 0 && processorList.get(0).startTime != 0) {
                 Task idleTask = new Task(0, processorList.get(0).startTime, true);
-                processorList.add(idleTask);
+                processorList.add(0, idleTask);
             }
             int j = 1;
             while (processorList.size() > j) {
                 Task currTask = processorList.get(j);
                 Task prevTask = processorList.get(j - 1);
                 if (currTask.startTime != prevTask.startTime + prevTask.duration) {
-                    Task idleTask = new Task(prevTask.startTime + prevTask.duration,
-                            currTask.startTime - (prevTask.startTime + prevTask.duration), true);
+                    int idleStartTime = prevTask.startTime + prevTask.duration;
+                    int idleDuration = currTask.startTime - idleStartTime;
+                    Task idleTask = new Task(idleStartTime, idleDuration, true);
                     processorList.add(j, idleTask);
                     j++;
                 }
@@ -170,7 +173,7 @@ public class Controller {
         for (int i = 0; i < numProcessors; i++) {
             for (int j = 0; j < bestSchedule[i].size(); j++) {
                 Task task = bestSchedule[i].get(j);
-                final XYChart.Data<String, Number> bar = new XYChart.Data<>("Processor " + (numProcessors - j), task.duration);
+                final XYChart.Data<String, Number> bar = new XYChart.Data<>("" + i, task.duration);
                 bar.nodeProperty().addListener((ov, oldNode, node) -> {
                     if (node != null) {
                         if (task.isIdle) {
@@ -185,7 +188,6 @@ public class Controller {
         }
 
         stackedBarChart.getData().addAll(series);
-
     }
 
     /**
