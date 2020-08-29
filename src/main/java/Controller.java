@@ -88,7 +88,7 @@ public class Controller {
                 boolean isDone = visualThread.isDone();
 
                 Platform.runLater(() -> {
-                    stateCountLabel.setText(stateCount/1000 + "k");
+                    updateStateCountLabel(stateCount);
                     if (visualThread.getBestChanged()) {
                         currentBestLabel.setText(visualThread.getCurrentBest() + "");
                         updateStackedBarChart(visualThread.getBestSchedule());
@@ -125,6 +125,16 @@ public class Controller {
         poller.cancel();
         timer.cancel();
         setStatusFinished();
+    }
+
+    private void updateStateCountLabel(long stateCount) {
+        if (stateCount < 1000) {
+            stateCountLabel.setText(stateCount + "");
+        } else if (stateCount < 1000000) {
+            stateCountLabel.setText(stateCount/1000 + "K");
+        } else {
+            stateCountLabel.setText(stateCount/1000000 + "M");
+        }
     }
 
     /**
