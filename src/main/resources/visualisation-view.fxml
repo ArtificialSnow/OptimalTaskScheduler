@@ -97,7 +97,7 @@
                         <Font size="28.0" />
                      </font>
                   </Label>
-                  <Label fx:id="statusLabel" text="RUNNING" textFill="#da0000">
+                  <Label fx:id="statusLabel" text="WAITING" textFill="#e7a499">
                      <font>
                         <Font size="28.0" />
                      </font>
@@ -111,14 +111,14 @@
                         <Font size="20.0" />
                      </font>
                   </Label>
-                  <Label fx:id="timerLabel" text="Label">
+                  <Label fx:id="timerLabel" text="00:00:00:00">
                      <font>
                         <Font size="20.0" />
                      </font>
                   </Label>
                </children>
             </HBox>
-            <StackedBarChart fx:id="stackedBarChart" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" rotate="180.0">
+            <StackedBarChart fx:id="stackedBarChart" animated="false" legendVisible="false" maxWidth="400.0" minWidth="400.0" prefWidth="400.0" rotate="180.0">
               <xAxis>
                 <CategoryAxis rotate="180.0" fx:id="xAxis">
                      <tickLabelFont>
@@ -141,7 +141,7 @@
       </VBox>
       <VBox alignment="CENTER" spacing="30.0">
          <children>
-            <Button fx:id="startButton" mnemonicParsing="false" onAction="#start" prefHeight="35.0" prefWidth="141.6" text="Start">
+            <Button fx:id="startButton" mnemonicParsing="false" onAction="#start" prefHeight="35.0" prefWidth="141.6" text="START">
                <font>
                   <Font size="18.0" />
                </font>

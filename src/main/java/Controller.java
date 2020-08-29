@@ -51,16 +51,6 @@ public class Controller {
     private Timer timer;
 
     /**
-     * This method initialises the stackedBarChart and timer for the GUI.
-     */
-    @FXML
-    private void initialize() {
-        stackedBarChart.setLegendVisible(false);
-        stackedBarChart.setAnimated(false);
-        timerLabel.setText("00:00:00:00");
-    }
-
-    /**
      * This method sets up initial values for labels in the GUI. It also sets up data structures used when adding
      * and removing tasks from the stackedBarChart.
      * @param visualThread thread on which the algorithm runs
@@ -79,7 +69,7 @@ public class Controller {
         // Add each processor to the xAxis for the stackedBarChart
         List<String> xAxisProcessors = new ArrayList<>();
         for (int i = 0; i < numProcessors; i++) {
-            xAxisProcessors.add(i + "");
+            xAxisProcessors.add((i + 1) + "");
         }
         xAxis.setCategories(FXCollections.observableArrayList(xAxisProcessors));
     }
@@ -87,6 +77,7 @@ public class Controller {
     @FXML
     private void start() {
         startButton.setDisable(true);
+        setStatusRunning();
 
         visualThread.start();
         poller = new Timer();
@@ -133,6 +124,7 @@ public class Controller {
     private void stop() {
         poller.cancel();
         timer.cancel();
+        setStatusFinished();
     }
 
     /**
@@ -173,7 +165,7 @@ public class Controller {
         for (int i = 0; i < numProcessors; i++) {
             for (int j = 0; j < bestSchedule[i].size(); j++) {
                 Task task = bestSchedule[i].get(j);
-                final XYChart.Data<String, Number> bar = new XYChart.Data<>("" + i, task.duration);
+                final XYChart.Data<String, Number> bar = new XYChart.Data<>((numProcessors - i) + "", task.duration);
                 bar.nodeProperty().addListener((ov, oldNode, node) -> {
                     if (node != null) {
                         if (task.isIdle) {
@@ -194,8 +186,13 @@ public class Controller {
      * This method stops the timer and changes the status of the visualisation
      * from RUNNING to FINISHED.
      */
-    public void setStatusFinished() {
+    private void setStatusFinished() {
         statusLabel.setText("FINISHED");
         statusLabel.setStyle("-fx-text-fill: forestgreen");
+    }
+
+    private void setStatusRunning() {
+        statusLabel.setText("RUNNING");
+        statusLabel.setStyle("-fx-text-fill: #ff3116");
     }
 }
