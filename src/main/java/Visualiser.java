@@ -20,6 +20,7 @@ public class Visualiser extends Application {
         primaryStage.setScene(new Scene(root, 800, 525));
         primaryStage.setResizable(false);
         primaryStage.getIcons().add(new Image("logo.png"));
+        primaryStage.setOnCloseRequest(event -> System.exit(0));
         primaryStage.show();
     }
 
