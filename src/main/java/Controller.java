@@ -76,6 +76,8 @@ public class Controller {
 
     @FXML
     private void start() {
+        final long startTime = System.currentTimeMillis();
+
         startButton.setDisable(true);
         setStatusRunning();
 
@@ -102,19 +104,16 @@ public class Controller {
 
         timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
-            // Get the current time, from which elapsed time will be calculated
-            final long startTime = System.currentTimeMillis();
-
             @Override
             public void run() {
                 long elapsedMillis = System.currentTimeMillis() - startTime;
                 // Calculate the milliseconds, seconds, and minutes passed since the start of the program.
-                int milliseconds = (int) (elapsedMillis % 100);
+                int milliseconds = (int) ( elapsedMillis % 1000);
                 int seconds = (int) ((elapsedMillis / 1000) % 60);
                 int minutes = (int) ((elapsedMillis / (1000 * 60)) % 60);
                 int hours = (int) (elapsedMillis / (1000 * 60 * 60));
                 Platform.runLater(() -> {
-                    timerLabel.setText(String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, milliseconds));
+                    timerLabel.setText(String.format("%02d:%02d:%02d.%02d", hours, minutes, seconds, milliseconds / 10));
                 });
             }
         }, 0, 10);
