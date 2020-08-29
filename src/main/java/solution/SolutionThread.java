@@ -48,6 +48,7 @@ public class SolutionThread extends Thread {
             SequentialScheduler scheduler = new SequentialScheduler(taskGraph);
             result = scheduler.getSchedule();
             solution.setInitialSchedule(result);
+            solution.setDone();
         } else {
             // Run greedy algorithm to determine lower bound of optimal solution
             Greedy g = new Greedy();
@@ -71,24 +72,24 @@ public class SolutionThread extends Thread {
 
     // Getter methods by which the poller of this thread can access the published results of the solution.
 
-    public synchronized int getCurrentBest() {
+    public int getCurrentBest() {
         return solution.bestFinishTime;
     }
 
-    public synchronized long getStateCount() {
+    public long getStateCount() {
         return solution.stateCount;
     }
 
-    public synchronized boolean isDone() {
+    public boolean isDone() {
         return solution.isDone;
     }
 
-    public synchronized List<Task>[] getBestSchedule() {
+    public List<Task>[] getBestSchedule() {
         return solution.bestSchedule;
     }
 
     // Check that the best solution has changed since last received.
-    public synchronized boolean getBestChanged() {
+    public boolean getBestChanged() {
         boolean hasChanged = solution.bestChanged;
         solution.bestChanged = false;
         return hasChanged;
