@@ -41,7 +41,6 @@ public class SolutionThread extends Thread {
 
     public void run() {
         Schedule result;
-        Schedule greedySchedule = null;
 
         // if the number of processors is one, then the optimal solution is just everything run
         // sequentially.
@@ -51,21 +50,21 @@ public class SolutionThread extends Thread {
         } else {
             // Run greedy algorithm to determine lower bound of optimal solution
             Greedy g = new Greedy();
-            greedySchedule = g.run(taskGraph, numProcessors);
+            result = g.run(taskGraph, numProcessors);
 
             // Run algorithm to find optimal schedule
             long startTime = System.currentTimeMillis();
-            result = solution.run(taskGraph, numProcessors, greedySchedule.getFinishTime());
+            Schedule optimalResult = solution.run(taskGraph, numProcessors, result.getFinishTime());
+
+            if (optimalResult.getFinishTime() < result.getFinishTime()) {
+                result = optimalResult;
+            }
+
             System.out.println("Program ran in: " + (System.currentTimeMillis() - startTime) + "ms");
+            System.out.println("Best schedule has finishing time of " + result.getFinishTime());
         }
 
-        // Our solution ignores all schedules that are >= than the greedy schedule,
-        // so this is to ensure if nothing is faster, we return the greedy schedule.
-        if (greedySchedule != null && result.getFinishTime() >= greedySchedule.getFinishTime()) {
-            IOParser.write(outputFilePath, dotGraph, greedySchedule);
-        } else {
-            IOParser.write(outputFilePath, dotGraph, result);
-        }
+        IOParser.write(outputFilePath, dotGraph, result);
     }
 
     // Getter methods by which the poller of this thread can access the published results of the solution.
