@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.Stack;
 
 public class PartialSchedule {
+
     /**
      * Generates a hashcode that represents a partial schedule.
      * The hashcode is used to check whether we have explored an equivalent partial schedule.
