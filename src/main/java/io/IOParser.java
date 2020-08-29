@@ -21,7 +21,7 @@ import org.graphstream.stream.file.FileSourceDOT;
 public class IOParser {
 
     /**
-     * Reads a dot file into a data.TaskGraph object that encapsulates the initial tasks and their dependencies.
+     * Reads a dot file into a Graph object that encapsulates the initial tasks and their dependencies.
      * @param inputFileName The name of the input dot file.
      * @return Graph object that encapsulates the initial tasks and their dependencies
      */
