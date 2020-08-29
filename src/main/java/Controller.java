@@ -181,7 +181,7 @@ public class Controller {
                         if (task.isIdle) {
                             node.setStyle("-fx-bar-fill: transparent");
                         } else {
-                            node.setStyle("-fx-bar-fill: #e9c4bc;");
+                            node.setStyle("-fx-bar-fill: #e9c4bc;-fx-border-color: #444;");
                         }
                     }
                 });
