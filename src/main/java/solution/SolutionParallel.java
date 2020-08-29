@@ -34,7 +34,7 @@ public class SolutionParallel extends Solution {
      * @return optimal schedule found by the run method.
      */
     public Schedule run() {
-        initializeGlobalVars(taskGraph, numProcessors, upperBoundTime);
+        initializeGlobalVars(taskGraph, numProcessors);
         SearchState initialSearchState = initializeState(taskGraph, numProcessors);
 
         RecursiveSearch recursiveSearch = new RecursiveSearch(initialSearchState);
@@ -266,13 +266,11 @@ public class SolutionParallel extends Solution {
     /**
      * Helper method to initialize variables used by all threads.
      */
-    private void initializeGlobalVars(TaskGraph taskGraph, int numProcessors, int upperBoundTime) {
+    private void initializeGlobalVars(TaskGraph taskGraph, int numProcessors) {
         this.taskGraph = taskGraph;
         this.numProcessors = numProcessors;
         maxLengthToExitNode = PreProcessor.maxLengthToExitNode(taskGraph);
         nodePriorities = maxLengthToExitNode;
-        bestFinishTime = upperBoundTime;
-        updateBestScheduleOnVisual();
         numTasks = taskGraph.getNumberOfTasks();
         equivalentNodesList = PreProcessor.getNodeEquivalence(taskGraph);
         bestStartTime = new int[numTasks];
