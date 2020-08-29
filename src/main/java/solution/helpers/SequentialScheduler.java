@@ -21,7 +21,7 @@ public class SequentialScheduler {
 
     /**
      * This method gets the optimal solution for when the number of processors is exactly 1.
-     * 
+     *
      * @return Schedule, the optimal schedule when only one processor can be used to schedule tasks on.
      */
     public Schedule getSchedule() {
