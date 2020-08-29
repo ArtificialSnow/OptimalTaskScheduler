@@ -15,7 +15,7 @@ import java.util.List;
  * This is done by extending the thread class, so that it may be polled.
  * The intermediate results of the solution are accessed by a poller via getters provided in this class.
  */
-public class VisualThread extends Thread {
+public class SolutionThread extends Thread {
     private final Solution solution;
     private final TaskGraph taskGraph;
     private final int numProcessors;
@@ -29,7 +29,7 @@ public class VisualThread extends Thread {
      * @param outputFilePath The path to the output file.
      * @param dotGraph The input graph in dot format.
      */
-    public VisualThread(Solution solution, TaskGraph taskGraph, int numProcessors, String outputFilePath, Graph dotGraph) {
+    public SolutionThread(Solution solution, TaskGraph taskGraph, int numProcessors, String outputFilePath, Graph dotGraph) {
         super();
         this.solution = solution;
         solution.setVisual(); // flag the solution as visual

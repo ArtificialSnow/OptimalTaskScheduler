@@ -10,7 +10,7 @@ import org.graphstream.graph.Graph;
 import solution.Solution;
 import solution.SolutionParallel;
 import solution.SolutionSequential;
-import solution.VisualThread;
+import solution.SolutionThread;
 import solution.helpers.Greedy;
 import solution.helpers.SequentialScheduler;
 
@@ -143,13 +143,13 @@ public class Driver {
     private static void runVisual(Solution solution, String outputFilePath, Graph dotGraph) {
         PlatformImpl.startup(() -> {
             Visualiser visualiser = new Visualiser();
-            VisualThread visualThread = new VisualThread(solution, taskGraph, numProcessors, outputFilePath, dotGraph);
+            SolutionThread solutionThread = new SolutionThread(solution, taskGraph, numProcessors, outputFilePath, dotGraph);
             try {
                 visualiser.start(new Stage());
             } catch (Exception e) {
                 e.printStackTrace();
             }
-            visualiser.setUpArgs(visualThread, numProcessors, fileName, taskGraph.getNumberOfTasks(), numThreads);
+            visualiser.setUpArgs(solutionThread, numProcessors, fileName, taskGraph.getNumberOfTasks(), numThreads);
         });
     }
 
