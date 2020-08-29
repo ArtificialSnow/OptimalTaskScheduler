@@ -62,9 +62,9 @@ public class SolutionThread extends Thread {
         // Our solution ignores all schedules that are >= than the greedy schedule,
         // so this is to ensure if nothing is faster, we return the greedy schedule.
         if (greedySchedule != null && result.getFinishTime() >= greedySchedule.getFinishTime()) {
-            IOParser.write(outputFilePath, dotGraph, greedySchedule.getTasks());
+            IOParser.write(outputFilePath, dotGraph, greedySchedule);
         } else {
-            IOParser.write(outputFilePath, dotGraph, result.getTasks());
+            IOParser.write(outputFilePath, dotGraph, result);
         }
     }
 
