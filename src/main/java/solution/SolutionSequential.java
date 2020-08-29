@@ -3,7 +3,7 @@ package solution;
 import data.Schedule;
 import data.Task;
 import data.TaskGraph;
-import solution.helpers.PartialSchedule;
+import solution.helpers.PartialScheduleHashGenerator;
 import solution.helpers.PreProcessor;
 
 import java.util.*;
@@ -48,7 +48,7 @@ public class SolutionSequential extends Solution {
 
         // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
         // If we have seen an equivalent schedule we do not need to proceed
-        int hashCode = PartialSchedule.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
+        int hashCode = PartialScheduleHashGenerator.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
         if (seenSchedules.contains(hashCode)) {
             return;
         } else {
@@ -375,7 +375,7 @@ public class SolutionSequential extends Solution {
 
         // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
         // If we have seen an equivalent schedule we do not need to proceed
-        int hashCode = PartialSchedule.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
+        int hashCode = PartialScheduleHashGenerator.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
         if (seenSchedules.contains(hashCode)) {
             return;
         } else {
