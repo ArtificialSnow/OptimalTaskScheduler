@@ -5,6 +5,7 @@ public abstract class Solution {
     protected TaskGraph taskGraph;
     protected int numProcessors;
     protected int numTasks;
+    private boolean isVisual = false;
 
     protected int[] nodePriorities;
     protected ArrayList<Integer>[] equivalentNodesList;
@@ -22,6 +23,10 @@ public abstract class Solution {
 
     public abstract Schedule run(TaskGraph taskGraph, int numProcessors, int upperBoundTime);
 
+    public void setVisual() {
+        this.isVisual = true;
+    }
+
     protected synchronized void updateStateCount() {
         this.stateCount++;
     }
@@ -31,6 +36,7 @@ public abstract class Solution {
     }
 
     protected synchronized void updateBestSchedule() {
+        if (!isVisual) return;
         bestSchedule = new List[numProcessors];
         for (int i = 0; i < numProcessors; i++) {
             bestSchedule[i] = new ArrayList<>();

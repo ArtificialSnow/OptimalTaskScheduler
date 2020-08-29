@@ -84,7 +84,7 @@ public class Driver {
                 // Run algorithm to find optimal schedule
                 long startTime = System.currentTimeMillis();
                 result = solution.run(taskGraph, numProcessors, greedySchedule.getFinishTime());
-                System.out.println(System.currentTimeMillis() - startTime);
+                System.out.println("Program ran in: " + (System.currentTimeMillis() - startTime) + "ms");
             }
 
             // Our solution ignores all schedules that are >= than the greedy schedule,
