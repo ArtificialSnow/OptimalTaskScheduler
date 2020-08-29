@@ -33,7 +33,7 @@ public class SolutionSequential extends Solution {
     }
 
     /**
-     * This method recursively tries to schedule tasks on processors. 
+     * This method recursively tries to schedule tasks on processors.
      *
      * @param candidateTasks a list of tasks that are currently available to be scheduled
      */
