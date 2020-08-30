@@ -13,36 +13,30 @@ public class Greedy {
 
     public Schedule run(TaskGraph taskGraph, int numProcessors){
         Schedule bestSchedule = runSchedule(taskGraph, numProcessors);
-        System.out.println(bestSchedule.getFinishTime());
 
         int[] bLevels = PreProcessor.maxLengthToExitNode(taskGraph);
         int[] weights = taskGraph.getDurations();
 
         Schedule reverseBLevelPriority = runScheduleWithPriority(taskGraph, numProcessors, bLevels, true);
-        System.out.println(reverseBLevelPriority.getFinishTime());
         if(reverseBLevelPriority.getFinishTime() < bestSchedule.getFinishTime()) {
             bestSchedule = reverseBLevelPriority;
         }
 
         Schedule bLevelPriority = runScheduleWithPriority(taskGraph, numProcessors, bLevels, false);
-        System.out.println(bLevelPriority.getFinishTime());
         if(bLevelPriority.getFinishTime() < bestSchedule.getFinishTime()){
             bestSchedule = bLevelPriority;
         }
 
         Schedule reverseTaskWeightPriority = runScheduleWithPriority(taskGraph, numProcessors, weights, true);
-        System.out.println(reverseTaskWeightPriority.getFinishTime());
         if(reverseTaskWeightPriority.getFinishTime() < bestSchedule.getFinishTime()){
             bestSchedule = reverseTaskWeightPriority;
         }
 
         Schedule taskWeightPriority = runScheduleWithPriority(taskGraph, numProcessors, weights, false);
-        System.out.println(taskWeightPriority.getFinishTime());
         if(taskWeightPriority.getFinishTime() < bestSchedule.getFinishTime()){
             bestSchedule = taskWeightPriority;
         }
 
-        System.out.println(bestSchedule.getFinishTime());
         return bestSchedule;
     }
 
