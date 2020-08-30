@@ -149,6 +149,7 @@ public class SolutionSequential extends Solution {
                     }
                 }
 
+                // Partial duplicate avoidance
                 if(!childAddedLastRound && candidateProcessor < previousProcessor){
                     continue;
                 }
