@@ -91,7 +91,6 @@ public class Controller {
         // Start the algorithm
         solutionThread.start();
 
-
         // timer for polling and updating elapsed time
         new AnimationTimer() {
             final long startTime = System.currentTimeMillis();

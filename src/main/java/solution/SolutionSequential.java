@@ -29,9 +29,7 @@ public class SolutionSequential extends Solution {
      */
     public Schedule run() {
         LinkedList<Integer> candidateTasks = initialize(taskGraph, numProcessors);
-
         recursiveSearch(candidateTasks);
-        System.out.println("Our optimal schedule finishes in " + bestFinishTime);
         setDone();
         return createOutput();
     }
