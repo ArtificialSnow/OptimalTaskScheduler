@@ -52,8 +52,8 @@ public class SolutionSequential extends Solution {
 
         // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
         // If we have seen an equivalent schedule we do not need to proceed
-        int hashCode = PartialScheduleHashGenerator.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
-        if (seenSchedules.contains(hashCode)) {
+        HashSet<Integer> hashCodes = PartialScheduleHashGenerator.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
+        if (seenSchedules.contains(hashCodes)) {
             return;
         } else {
             // Find if we can complete the tasks in Fixed data.Task Order (FTO)
@@ -62,7 +62,8 @@ public class SolutionSequential extends Solution {
                 getFTOSchedule(ftoSorted);
                 return;
             }
-            seenSchedules.add(hashCode);
+            System.out.println(seenSchedules.size());
+            seenSchedules.add(hashCodes);
         }
 
         // Information we need about the current schedule
@@ -392,11 +393,12 @@ public class SolutionSequential extends Solution {
 
         // Create a hash code for our partial schedule to check whether we have examined an equivalent schedule before
         // If we have seen an equivalent schedule we do not need to proceed
-        int hashCode = PartialScheduleHashGenerator.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
-        if (seenSchedules.contains(hashCode)) {
+        HashSet<Integer> hashCodes = PartialScheduleHashGenerator.generateHashCode(taskStartTimes, scheduledOn, numProcessors);
+        if (seenSchedules.contains(hashCodes)) {
             return;
         } else {
-            seenSchedules.add(hashCode);
+            seenSchedules.add(hashCodes);
+            System.out.println(seenSchedules.size());
         }
 
         // Information we need about the current schedule
