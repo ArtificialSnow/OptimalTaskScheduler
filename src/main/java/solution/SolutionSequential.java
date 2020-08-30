@@ -62,7 +62,6 @@ public class SolutionSequential extends Solution {
                 getFTOSchedule(ftoSorted);
                 return;
             }
-            System.out.println(seenSchedules.size());
             seenSchedules.add(hashCodes);
         }
 
@@ -398,7 +397,6 @@ public class SolutionSequential extends Solution {
             return;
         } else {
             seenSchedules.add(hashCodes);
-            System.out.println(seenSchedules.size());
         }
 
         // Information we need about the current schedule
